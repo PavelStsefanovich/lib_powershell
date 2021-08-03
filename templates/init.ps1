@@ -1,5 +1,5 @@
 [cmdletbinding()]
-Param (
+param (
     [string]$parameter1,
     [string]$parameter2
 )
