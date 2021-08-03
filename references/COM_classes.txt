@@ -1,0 +1,47 @@
+__________________________________________
+Shell.Application
+
+Provides access to Windows Explorer and its capabilities.
+Allows automation of many shell tasks like opening file
+browser windows; launching documents or the help system;
+finding printers, computers, or files; and so on.
+
+__________________________________________
+SAPI.SpVoice
+
+Provides access to the Microsoft Speech API. Allows text-tospeech
+with the Speak("string") method.
+
+__________________________________________
+WMPlayer.OCX
+
+Manipulates the Windows Media Player.
+
+__________________________________________
+MMC20.Application
+
+Manipulates the Microsoft Management Console application.
+
+__________________________________________
+Agent.Control
+
+Interface to the Windows Animated Agents framework. Allows
+animated characters to be displayed.
+
+__________________________________________
+Microsoft.Update.Session
+
+Provides access to the Windows Update Agent (WUA), allowing
+you to scan, download, and install updates.
+
+__________________________________________
+Schedule.Service
+
+Allows you to create and schedule tasks, get a list of running
+tasks, and delete task definitions (see section 18.6 for examples).
+
+__________________________________________
+WScript.Shell
+
+Provides access to system information and environment variables;
+lets you create shortcuts and work with the Registry
