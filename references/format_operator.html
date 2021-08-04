@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<!-- saved from url=(0042)https://ss64.com/ps/syntax-f-operator.html -->
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=768, initial-scale=1">
+    <title>-f Format operator (PowerShell)</title>
+
+    <style>
+        .tab1 {
+            background-color: #ddd;
+            border-collapse: collapse;
+        }
+
+        .tab1 td {
+            border-bottom: 1px solid #999;
+            padding: 2px 8px;
+        }
+
+        .tab1 tbody tr:hover td {
+            background-color: #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>How-to: The <span class="code">-f </span>Format operator</h1>
+    <p>Format a string expression.</p>
+    <pre>Syntax:
+       "String with placeholders" <b>-f</b> "Array of values to place into the placeholders"
+
+<span class="code">       'Filename: <b>{0}</b> Created: <b>{1}</b>' <b>-f</b> $_.fullname,$_.creationtime</span>
+
+       "{<i>I,A:FS</i>} {<i>I,A:FS</i>} {<i>I,A:FS</i>}.." <b>-f</b> "string0", "string1", "string2"...</pre>
+    <blockquote>
+        <blockquote>
+            <p>Place <span class="code">{0} {1}</span> etc. into the string as placemarkers where you want the variables
+                to appear, <span class="code"></span>immediately follow the string with the<span class="code"> -f
+                </span>operator and then lastly, a list of comma separated variables/objects which will be used to
+                populate the placemarkers.</p>
+        </blockquote>
+    </blockquote>
+    <pre>Key:
+<i>   I </i>  Index of the item to display, 0,1,2 etc.</pre>
+    <pre><i>   A</i>   Alignment. 
+       A positive number will <b>right</b> align <i>n </i>characters. 
+       A negative number will <b>left</b> align <i>n </i>characters. 
+        so {2,-25} will allocate 25 characters of horizontal space on the line, even if the string is only 1 character long. </pre>
+    <pre><i>   FS</i>  An optional Format String that acts on the item depending on its type (not case sensitive).
+
+       Valid format strings:</pre>
+    <blockquote>
+        <blockquote>
+            <table class="tab1">
+                <tbody>
+                    <tr>
+                        <td class="code">:c </td>
+                        <td>Currency format (for the current culture)</td>
+                    </tr>
+                    <tr>
+                        <td class="code">:d</td>
+                        <td>Pa<b>dd</b>ed. (<span class="code">:d<i>P</i></span> precision=number of digits); if needed,
+                            leading zeros are added to the beginning of the (whole) number.</td>
+                    </tr>
+                    <tr>
+                        <td class="code">:e</td>
+                        <td>Scientific (exp) notation </td>
+                    </tr>
+                    <tr>
+                        <td class="code">:f</td>
+                        <td>Fixed point<br>
+                            :f5 = fix to 5 places </td>
+                    </tr>
+                    <tr>
+                        <td class="code">:g</td>
+                        <td>Most compact format, fixed or sci<br>
+                            :g5 = 5 significant digits </td>
+                    </tr>
+                    <tr>
+                        <td class="code">:n</td>
+                        <td>Number (<span class="code">:n<i>P</i></span> precision=number of decimal places), includes
+                            culture separator for thousands 1,000.00 </td>
+                    </tr>
+                    <tr>
+                        <td class="code">:p</td>
+                        <td>Percentage</td>
+                    </tr>
+                    <tr>
+                        <td class="code">:r</td>
+                        <td>Reversible Precision </td>
+                    </tr>
+                    <tr>
+                        <td class="code">:x</td>
+                        <td>Hex format </td>
+                    </tr>
+                    <tr>
+                        <td class="code">:hh<br>
+                            :mm<br>
+                            :ss</td>
+                        <td>Convert a DateTime to a 2 digit Hour/minute/second<br>
+                            <span class="code">"{0:hh}:{0:mm}"</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="code">:HH</td>
+                        <td>Hour in 24 Hour format</td>
+                    </tr>
+                    <tr>
+                        <td class="code">:dd</td>
+                        <td>Day of Month</td>
+                    </tr>
+                    <tr>
+                        <td class="code">:ddd</td>
+                        <td>Convert a DateTime to Day of the Week</td>
+                    </tr>
+                    <tr>
+                        <td class="code">:dddd</td>
+                        <td>Full name of Day of Week</td>
+                    </tr>
+                    <tr>
+                        <td class="code">:yyyy</td>
+                        <td>Full year</td>
+                    </tr>
+                    <tr>
+                        <td class="code">#</td>
+                        <td>Digit Place Holder</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>Some of these letters (:d, :D, :f, :F, :g, :G and :r, :R) also perform double duty as date patterns which
+                can lead to some confusion. <br>
+                When applied to a date they will act as date patterns and they are then case sensitive: <a
+                    href="https://ss64.com/ps/syntax-dateformats.html">Full list of Date Formats</a> <br>
+            </p>
+            <p>The -f format string can be surrounded by either single or double quotes.</p>
+            <p> Static text or more complex expressions may be included before or in-between the <span class="code">-f
+                    {<i>format strings</i>} </span><br>
+                The -F operator has equal precedence with Arithmetic operators, <span class="code">* / % + -</span> etc,
+                see About_Operator_Precedence<br>
+                When operators have equal precedence, PowerShell evaluates them from left to right.</p>
+        </blockquote>
+    </blockquote>
+    <p><b>Examples: </b></p>
+    <p>Display a number to 3 decimal places:<br>
+        <span class="code">PS C:\&gt; "{0:n3}" -f 123.45678<br>
+            123.457</span>
+    </p>
+    <pre><span class="code"><span class="body">Right align the first number only:</span><br>PS C:\&gt;"{0,10}" -f 4,5,6
+         4
+
+</span><span class="body">Left and right align text:</span>
+<span class="code">PS C:\&gt; "|{0,-10}| |{1,10}|" <b>-f</b> "hello", "world"</span>
+<span class="code">|hello     ||     world</span>|
+</pre>
+    <p>Display an integer with 3 digits:<br>
+        <span class="code">PS C:\&gt; "{0:n3}" -f [int32]12<br>
+            012</span>
+    </p>
+    <p>Separate a number with dashes (# digit place holder):<br>
+        <span class="code">PS C:\&gt; "{0:###-##-##}" -f 1234567<br>
+            123-45-67</span>
+    </p>
+    <p>Create a list of 100 names with a padded suffix no. (Name001 → Name100):<br>
+        <span class="code">1..100 | % { 'Name{0:<b>d3</b>}' -f $_ }</span>
+    </p>
+    <p>Convert a number to Hex:<br>
+        <span class="code"> PS C:\&gt; "{1,10} {0,10} {2,10:x}" <b>-f</b> "First", "Second", 255<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;Second&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FF<br>
+        </span>
+    </p>
+    <pre><span class="body">Convert the character 'A' to its hex equivalent (</span>[int][char]<span class="body"> gives the <a href="https://ss64.com/ascii.html">Ascii</a> number and then we convert):
+</span>PS C:\&gt; '0x' + "{0:x}" <b>-f</b> [int][char]'A'
+0x41<span class="body">
+
+Display filenames and creation time</span>:<br><span class="code">PS C:\&gt; Get-ChildItem c:\docs | ForEach-Object <b>{</b>'Filename: <b>{0}</b> Created: <b>{1}</b>' <b>-f</b> $_.fullname,$_.creationtime<b>}</b></span></pre>
+    <p>Display only the Year from a date time value:<span class="code"><br>
+            PS C:\&gt; "{0:yyyy}" <b>-f</b> (Get-Date)<br>
+            2018
+        </span></p>
+    <p>Display the hours and minutes from a date time value:<span class="code"><br>
+            PS C:\&gt; "{0:hh}:{0:mm}" <b>-f</b> (Get-Date)<br>
+            17:52</span></p>
+
+    <p>Reverse the order of display:<br>
+        <span class="code"> PS C:\&gt; "{2} {1,-10} {0:n3}" <b>-f</b> [math]::pi, "world", "hello"<br>
+            hello world 3.142</span>
+    </p>
+    <p>Display a number as a percentage:<br>
+        <span class="code">PS C:\&gt; "{0:p0}" -f 0.5<br>
+            50%</span>
+    </p>
+    <p>Display a whole number padded to 5 digits:<br>
+        <span class="code">PS C:\&gt; "{0:d5}" -f 123<br>
+            00123
+        </span><br>
+    </p>
+    <p class="quote"><i>“I skate to where the puck is going to be, not where it has been” ~ Wayne Gretsky</i></p>
+    <p><b>Related PowerShell Cmdlets:</b></p>
+    <p><span class="space"><a href="https://ss64.com/ps/syntax-operators.html">PowerShell Operators</a> - Format strings
+            and arrays.</span><br>
+        <span class="space"><a href="https://ss64.com/ps/format-hex.html">Format-Hex</a> - Displays a file or other
+            input as hexadecimal.<br>
+            <a href="https://ss64.com/ps/syntax-variables.html">Variables</a> - PowerShell Variables and basic
+            Mathematical operators (+ - = /).<br>
+            <a href="https://ss64.com/ps/syntax-pipeline.html">Pipelines</a> - Pass objects down the
+            pipeline.</span><br>
+    </p><!-- #BeginLibraryItem "/Library/foot_ps.lbi" -->
+    <p>
+        <script async="" src="./format_operator_files/f.txt"></script>
+        <!-- PowerShell300 -->
+        <ins class="adsbygoogle" style="display:inline-block;width:300px;height:250px"
+            data-ad-client="ca-pub-6140977852749469" data-ad-slot="6253539900"></ins>
+        <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </p>
+</body>
+
+</html>
