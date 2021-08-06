@@ -116,8 +116,8 @@ COMPONENT               The technology or feature that the command is associated
 ROLE                    The user role for this command.
 FUNCTIONALITY           The intended use of the function.
 FORWARDHELPTARGETNAME   Redirects to the help topic for the specified command.
-FORWARDHELPCATEGORY        Specifies the help category of the item in the .FORWARDHELPTARGETNAME tag.
-REMOTEHELPRUNSPACE        Specifies the name of a variable containing the PSSession to use when looking up help for this function. This keyword is used by the Export-PSSession cmdlet to find the Help topics for the exported commands. (See section 12.4.2.)
+FORWARDHELPCATEGORY     Specifies the help category of the item in the .FORWARDHELPTARGETNAME tag.
+REMOTEHELPRUNSPACE      Specifies the name of a variable containing the PSSession to use when looking up help for this function. This keyword is used by the Export-PSSession cmdlet to find the Help topics for the exported commands. (See section 12.4.2.)
 EXTERNALHELP            Specifies the path to an external help file for the command.
 
 #>

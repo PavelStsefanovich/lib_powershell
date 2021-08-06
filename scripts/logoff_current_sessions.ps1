@@ -43,7 +43,7 @@ Process {
         }
     }
 End {
-   return $ListofSessions 
+   return $ListofSessions
     }
 }
 
@@ -52,8 +52,8 @@ $sessions = Get-ComputerSessions $env:computername
 $sessions
 
 foreach ($session in $sessions){
-	if ($session.State -eq "Active" -or "Disc")
-	{logoff $session.Id /server:$env:computername}
-	"All Sessions are Logged Off!"
+    if ($session.State -eq "Active" -or "Disc")
+    {logoff $session.Id /server:$env:computername}
+    "All Sessions are Logged Off!"
 
 }

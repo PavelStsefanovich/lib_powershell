@@ -1,0 +1,12 @@
+[08/05/2021 22:05:00] [ main_scrpt.ps1] [ 44] [   INFO] Logger is up
+[08/05/2021 22:05:00] [child_script.ps1] [  3] [  DEBUG] Message n. 1
+[08/05/2021 22:05:00] [child_script.ps1] [  3] [WARNING] Message n. 2
+[08/05/2021 22:05:01] [child_script.ps1] [  3] [WARNING] Message n. 3
+[08/05/2021 22:05:02] [child_script.ps1] [  3] [  ERROR] Message n. 4
+[08/05/2021 22:05:02] [child_script.ps1] [  3] [  ERROR] Message n. 5
+[08/05/2021 22:05:02] [child_script.ps1] [  3] [   INFO] Message n. 6
+[08/05/2021 22:05:03] [child_script.ps1] [  3] [  DEBUG] Message n. 7
+[08/05/2021 22:05:04] [child_script.ps1] [  3] [  DEBUG] Message n. 8
+[08/05/2021 22:05:04] [child_script.ps1] [  3] [WARNING] Message n. 9
+[08/05/2021 22:05:04] [child_script.ps1] [  3] [  ERROR] Message n. 10
+[08/05/2021 22:05:05] [ main_scrpt.ps1] [  8] [   INFO] ==> END OF LOG <==
