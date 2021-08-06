@@ -67,6 +67,12 @@ function request_consent {
 
 
 #--------------------------------------------------
+function wait_anykey {
+    [System.Console]::ReadKey("NoEcho").key | Out-Null
+}
+
+
+#--------------------------------------------------
 function isadmin {
     return ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
         [Security.Principal.WindowsBuiltInRole] "Administrator")
@@ -110,7 +116,27 @@ function restart_elevated {
 
 
 #--------------------------------------------------
-function jason_to_hash {
+function restart_pending {
+    $is_pending_restart = $false
+    if (Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending" -EA Ignore) { $is_pending_restart = $true }
+    if (Get-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired" -EA Ignore) { $is_pending_restart = $true }
+    if (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name PendingFileRenameOperations -EA Ignore) { $is_pending_restart = $true }
+
+    try {
+        $util = [wmiclass]"\\.\root\ccm\clientsdk:CCM_ClientUtilities"
+        $status = $util.DetermineIfRebootPending()
+        if (($status -ne $null) -and $status.RebootPending) {
+            $is_pending_restart = $true
+        }
+    }
+    catch { }
+
+    return $is_pending_restart
+}
+
+
+#--------------------------------------------------
+function jason_to_hsht {
     param(
         [Parameter(
             Mandatory = $true,
@@ -187,3 +213,82 @@ function unzip {
     Add-Type -AssemblyName "system.io.compression.filesystem"
     [io.compression.zipfile]::ExtractToDirectory($zip_path, $to_dir)
 }
+
+
+#--------------------------------------------------
+function files_with_text {
+    param([string]$text)
+    (ls -Force -Recurse -File | sls $text).Path | Get-Unique
+}
+
+
+#--------------------------------------------------
+function sha {
+    param(
+        [Parameter(
+            Mandatory = $true,
+            Position = 0,
+            ValueFromPipeline = $true)]
+        [AllowEmptyString()]
+        [String] $text_to_encrypt,
+
+        [parameter(Mandatory = $false)]
+        [ValidateSet('256', '384', '512')]
+        [string]$algorithm = '256'
+    )
+
+    begin {
+        $algorithm_name = "SHA$algorithm`Managed"
+        $hasher = new-object System.Security.Cryptography.$algorithm_name
+    }
+
+    process {
+        $byte_array = [System.Text.Encoding]::UTF8.GetBytes($text_to_encrypt)
+        $hash_byte_array = $hasher.ComputeHash($byte_array)
+
+        foreach ($byte in $hash_byte_array) {
+            $encrypted_text += $byte.ToString()
+        }
+
+        $encrypted_text
+    }
+
+    end { $hasher = $null }
+}
+
+
+#--------------------------------------------------
+function base64 {
+    param(
+        [Parameter(
+            Mandatory = $true,
+            Position = 0,
+            ValueFromPipeline = $true)]
+        [AllowEmptyString()]
+        [String] $text_to_convert,
+
+        [parameter(Mandatory = $false)]
+        [switch]$decrypt
+    )
+
+    begin {}
+
+    process {
+        if ($decrypt) { [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($text_to_convert)) }
+        else { [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($text_to_convert)) }
+    }
+
+    end {}
+}
+
+
+
+
+
+# Set-Alias -Name ics -Value Invoke-ComputerSleep
+# Set-Alias -Name isr -Value Test-RestartRequired
+# Set-Alias -Name ask -Value Request-Consent
+# Set-Alias -Name wait -Value Wait-AnyKey
+# Set-Alias -Name abspath -Value Get-AbsolutePath
+
+# Export-ModuleMember -Function * -Alias *
