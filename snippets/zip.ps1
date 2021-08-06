@@ -14,30 +14,13 @@ $include_base_dir = $true   # True, False
 
 
 
-# Examples:
-# (!) all paths in the functions below are expected to be absolute, therefore abspath() is used
-
+# Extract single file from arvhive
 function abspath ($parent = $pwd.Path) {
     process {
         if ([System.IO.Path]::IsPathRooted($_)) { (Resolve-Path $_).Path }
         else { (Resolve-Path (Join-Path $parent $_)).Path }
     }
 }
-
-function zip ($source_dir, $destination_zipfile_path, $compression = 'Optimal', [switch]$include_base_dir) {
-    $source_dir = $source_dir | abspath
-    $destination_zipfile_path = $destination_zipfile_path | abspath
-    Add-Type -AssemblyName "system.io.compression.filesystem"
-    [io.compression.zipfile]::CreateFromDirectory($source_dir, $destination_zipfile_path, $compression, $include_base_dir.IsPresent)
-}
-
-function unzip ($source_zipfile_path, $destination_dir) {
-    $source_zipfile_path = $source_zipfile_path | abspath
-    $destination_dir = $destination_dir | abspath
-    Add-Type -AssemblyName "system.io.compression.filesystem"
-    [io.compression.zipfile]::ExtractToDirectory($source_zipfile_path, $destination_dir)
-}
-
 function extract_file ($source_zipfile_path, $file_to_extract, $destination_dir_path) {
     $source_zipfile_path = $source_zipfile_path | abspath
     $destination_dir_path = $destination_dir_path | abspath
