@@ -13,6 +13,7 @@ function Get-RegistryValue {
     return $regValues
 }
 
+#--------------------------------------------------
 function Get-RegistryValueData {
     [CmdletBinding()]
     param (
@@ -28,6 +29,7 @@ function Get-RegistryValueData {
     return $keyValue
 }
 
+#--------------------------------------------------
 function Get-RegistryValueDataType ([string]$key, [string]$item) {
     $ErrorActionPreference = 'Stop'
 
@@ -38,6 +40,7 @@ function Get-RegistryValueDataType ([string]$key, [string]$item) {
     return $itemType
 }
 
+#--------------------------------------------------
 function Set-RegistryValueData {
     [CmdletBinding()]
     param (

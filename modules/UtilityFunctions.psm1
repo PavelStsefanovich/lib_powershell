@@ -183,6 +183,13 @@ function abspath {
 
 
 #--------------------------------------------------
+function which {
+    param([string]$executable)
+    (gcm $executable -ErrorAction Stop).Source
+}
+
+
+#--------------------------------------------------
 function zip {
     param(
         [string]$from_dir,
@@ -242,8 +249,8 @@ function get_files_with_text {
         sls -SimpleMatch:$(!$regex.IsPresent) -Pattern $search_string -List).Path
     
     if ($open) {
-        $text_editor = 'notepad.exe'
-        if (Test-Path 'C:\Program Files\Notepad++\notepad++.exe') { $text_editor = 'C:\Program Files\Notepad++\notepad++.exe' }
+        try { $text_editor = which notepad++ } catch {}
+        if (!$text_editor) { $text_editor = 'notepad.exe' }
         $file_list | % { & $text_editor $_ }
     }
     
