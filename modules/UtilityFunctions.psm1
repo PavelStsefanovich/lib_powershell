@@ -117,21 +117,21 @@ function restart_elevated {
 
 #--------------------------------------------------
 function restart_pending {
-    $is_pending_restart = $false
-    if (Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending" -EA Ignore) { $is_pending_restart = $true }
-    if (Get-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired" -EA Ignore) { $is_pending_restart = $true }
-    if (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name PendingFileRenameOperations -EA Ignore) { $is_pending_restart = $true }
+    $is_restart_pending = $false
+    if (Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending" -EA Ignore) { $is_restart_pending = $true }
+    if (Get-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired" -EA Ignore) { $is_restart_pending = $true }
+    if (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name PendingFileRenameOperations -EA Ignore) { $is_restart_pending = $true }
 
     try {
         $util = [wmiclass]"\\.\root\ccm\clientsdk:CCM_ClientUtilities"
         $status = $util.DetermineIfRebootPending()
         if (($status -ne $null) -and $status.RebootPending) {
-            $is_pending_restart = $true
+            $is_restart_pending = $true
         }
     }
     catch { }
 
-    return $is_pending_restart
+    return $is_restart_pending
 }
 
 
@@ -143,7 +143,7 @@ function jason_to_hsht {
             Position = 0,
             ValueFromPipeline = $true)]
         [AllowEmptyString()]
-        [String] $json,
+        [String]$json,
 
         [Parameter()]
         [Switch]$large
@@ -216,9 +216,45 @@ function unzip {
 
 
 #--------------------------------------------------
-function files_with_text {
-    param([string]$text)
-    (ls -Force -Recurse -File | sls $text).Path | Get-Unique
+function get_files_with_text {
+    param(
+        [Parameter(
+            Mandatory = $true,
+            Position = 0)]
+        [ValidateNotNullOrEmpty()]
+        [string]$search_string,
+
+        [Parameter(
+            Mandatory = $false,
+            Position = 1)]
+        [string]$search_dir = $($pwd.path),
+
+        [Parameter()][string]$file_filter = "*",
+        [Parameter()][switch]$not_recursevly,
+        [Parameter()][switch]$regex,
+        [Parameter()][switch]$open,
+        [Parameter()][string]$dump_file
+    )
+
+    $ErrorActionPreference = 'Stop'
+    $search_dir = (Resolve-Path $search_dir).Path
+    $file_list = (ls $search_dir -Recurse:$(!$not_recursevly.IsPresent) -Filter $file_filter | `
+        sls -SimpleMatch:$(!$regex.IsPresent) -Pattern $search_string -List).Path
+    
+    if ($open) {
+        $text_editor = 'notepad.exe'
+        if (Test-Path 'C:\Program Files\Notepad++\notepad++.exe') { $text_editor = 'C:\Program Files\Notepad++\notepad++.exe' }
+        $file_list | % { & $text_editor $_ }
+    }
+    
+    if ($dump_file) {
+        if ($dump_file.trim().Length -eq 0) { $dump_file = $(Join-Path $pwd.path 'get_files_with_text_output.txt') }
+        if ($dump_file -notlike '*.txt') { $dump_file += '.txt' }
+        $file_list | Out-File $dump_file -Force -Encoding ascii
+    }
+    else {
+        $file_list
+    }
 }
 
 
