@@ -92,3 +92,5 @@ function Set-RegistryValueData {
     #- create registry value with data
     New-ItemProperty $key -Name $item -PropertyType $itemType -Value $value -Force | Out-Null
 }
+
+Export-ModuleMember -Function *
