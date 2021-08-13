@@ -1,3 +1,4 @@
+[CmdletBinding(DefaultParameterSetName = 'call_api')]
 param (
     [Parameter(
         Mandatory = $true,
@@ -128,9 +129,9 @@ function jason_to_hash {
     }
 }
 
-function sstring_to_plain ([System.Security.SecureString]$sstirng) {
-    $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sstirng)
-    $plain_text = [Runtime.InteropServices.Marshal]::PtrToStringAuto($pointer)    
+function sstring_to_plain ([System.Security.SecureString]$sstring) {
+    $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sstring)
+    $plain_text = [Runtime.InteropServices.Marshal]::PtrToStringAuto($pointer)
     return $plain_text
 }
 
@@ -200,7 +201,7 @@ if ($add_login) {
     $pair = "$($credential.UserName):$password"
     $encodedCreds = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($pair))
     $basicAuthValue = "Basic $encodedCreds"
-    $headers_ = @{ 'Authorization' = $basicAuthValue }    
+    $headers_ = @{ 'Authorization' = $basicAuthValue }
     $url_ = $artifactory_base_url + '/api/security/apiKey'
     $api_token = (irm -Uri $url_ -Headers $headers_).apiKey
 
