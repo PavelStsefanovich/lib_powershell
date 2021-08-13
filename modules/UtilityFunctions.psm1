@@ -314,18 +314,29 @@ function base64 {
         [switch]$decrypt
     )
 
-    begin {}
-
     process {
         if ($decrypt) { [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($text_to_convert)) }
         else { [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($text_to_convert)) }
     }
-
-    end {}
 }
 
 
+#--------------------------------------------------
+function ss_to_plain {
+    param(
+        [Parameter(
+            Mandatory = $true,
+            Position = 0,
+            ValueFromPipeline = $true)]
+        [System.Security.SecureString]$s_sting
+    )
 
+    process {
+        $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($s_sting)
+        $plain_text = [Runtime.InteropServices.Marshal]::PtrToStringAuto($pointer)    
+        return $plain_text
+    }
+}
 
 
 # Set-Alias -Name ics -Value Invoke-ComputerSleep
