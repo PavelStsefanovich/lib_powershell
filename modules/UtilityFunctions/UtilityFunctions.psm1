@@ -2,6 +2,13 @@ $message_padding = "  "
 
 
 #--------------------------------------------------
+function newline {
+    param([int]$count = 1)
+    Write-Host ("$message_padding`n" * $count).TrimEnd()
+}
+
+
+#--------------------------------------------------
 function error {
     param([string]$message)
     Write-Host ($message_padding + "ERROR: $message`n") -ForegroundColor Red
@@ -12,16 +19,13 @@ function error {
 function info {
     param(
         [string]$message,
-        [switch]$no_newline
+        [switch]$no_newline,
+        [switch]$success
     )
-    Write-Host ($message_padding + $message) -ForegroundColor Gray -NoNewline:$no_newline
-}
 
-
-#--------------------------------------------------
-function newline {
-    param([int]$count = 1)
-    Write-Host ("$message_padding`n" * $count).TrimEnd()
+    $color = 'Gray'
+    if ($success) { $color = 'Green' }
+    Write-Host ($message_padding + $message) -ForegroundColor $color -NoNewline:$no_newline
 }
 
 
@@ -35,16 +39,6 @@ function warning {
 
     if ($no_prefix) { Write-Host ($message_padding + $message) -ForegroundColor Yellow -NoNewline:$no_newline }
     else { Write-Host ($message_padding + "WARNING: $message") -ForegroundColor Yellow -NoNewline:$no_newline }
-}
-
-
-#--------------------------------------------------
-function confirm {
-    param(
-        [string]$message,
-        [switch]$no_newline
-    )
-    Write-Host ($message_padding + $message) -ForegroundColor Green -NoNewline:$no_newline
 }
 
 
@@ -67,7 +61,7 @@ function request_consent {
 
 
 #--------------------------------------------------
-function wait_anykey {
+function wait_any_key {
     [System.Console]::ReadKey("NoEcho").key | Out-Null
 }
 
@@ -247,13 +241,13 @@ function get_files_with_text {
     $search_dir = (Resolve-Path $search_dir).Path
     $file_list = (ls $search_dir -Recurse:$(!$not_recursevly.IsPresent) -Filter $file_filter | `
         sls -SimpleMatch:$(!$regex.IsPresent) -Pattern $search_string -List).Path
-    
+
     if ($open) {
         try { $text_editor = which notepad++ } catch {}
         if (!$text_editor) { $text_editor = 'notepad.exe' }
         $file_list | % { & $text_editor $_ }
     }
-    
+
     if ($dump_file) {
         if ($dump_file.trim().Length -eq 0) { $dump_file = $(Join-Path $pwd.path 'get_files_with_text_output.txt') }
         if ($dump_file -notlike '*.txt') { $dump_file += '.txt' }
@@ -333,16 +327,15 @@ function ss_to_plain {
 
     process {
         $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($s_sting)
-        $plain_text = [Runtime.InteropServices.Marshal]::PtrToStringAuto($pointer)    
+        $plain_text = [Runtime.InteropServices.Marshal]::PtrToStringAuto($pointer)
         return $plain_text
     }
 }
 
 
-# Set-Alias -Name ics -Value Invoke-ComputerSleep
-# Set-Alias -Name isr -Value Test-RestartRequired
-# Set-Alias -Name ask -Value Request-Consent
-# Set-Alias -Name wait -Value Wait-AnyKey
-# Set-Alias -Name abspath -Value Get-AbsolutePath
+Set-Alias -Name confirm -Value request_consent -Force
+Set-Alias -Name isr -Value restart_pending -Force
+Set-Alias -Name wait -Value wait_any_key -Force
+Set-Alias -Name fwt -Value get_files_with_text -Force
 
-# Export-ModuleMember -Function * -Alias *
+Export-ModuleMember -Function * -Alias *
