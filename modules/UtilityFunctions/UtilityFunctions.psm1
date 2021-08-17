@@ -130,6 +130,13 @@ function restart_pending {
 
 
 #--------------------------------------------------
+function hibernate {
+    Add-Type -AssemblyName System.Windows.Forms
+    [System.Windows.Forms.Application]::SetSuspendState("Suspend", $false, $true);
+}
+
+
+#--------------------------------------------------
 function jason_to_hsht {
     param(
         [Parameter(
@@ -333,8 +340,10 @@ function ss_to_plain {
 }
 
 
+#--------------------------------------------------
 Set-Alias -Name confirm -Value request_consent -Force
 Set-Alias -Name isr -Value restart_pending -Force
+Set-Alias -Name hib -Value hibernate -Force
 Set-Alias -Name wait -Value wait_any_key -Force
 Set-Alias -Name fwt -Value get_files_with_text -Force
 
