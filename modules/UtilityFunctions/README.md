@@ -31,6 +31,7 @@ https://www.powershellgallery.com/packages/UtilityFunctions
 | jason_to_hsht |  | Convert json object to hashtable |
 | abspath |  | Convert path to absolute path |
 | which |  | Print file source path |
+| list_module_commands | listmc | List module commands with aliases |
 | zip |  | Compress directory into .zip archive |
 | unzip |  | Extract .zip archive into directory |
 | get_files_with_text | fwt | Print (or open) filepaths that contain search text |

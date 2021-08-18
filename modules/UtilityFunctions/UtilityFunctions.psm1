@@ -191,6 +191,38 @@ function which {
 
 
 #--------------------------------------------------
+function list_module_commands {
+    param(
+        [Parameter(
+            Mandatory = $true,
+            Position = 0)]
+        [ValidateNotNullOrEmpty()]
+        [String]$module_name,
+
+        [Parameter()]
+        [Switch]$as_hashtable
+    )
+
+    if (!(Get-Module $module_name)) { throw "Module not found: `"$module_name`""}
+    $commands_map = @{}
+    $max_length = 0
+
+    (Get-Command -Module $module_name).name | `
+        % {
+            $commands_map.add($_, (Get-Alias -Definition $_ -ErrorAction SilentlyContinue))
+            if ($_.length -gt $max_length) { $max_length = $_.length }
+        }
+
+    if ($as_hashtable) { return $commands_map }
+    $commands_map.keys | sort | %{
+        $line = " $_"
+        if ($commands_map.$_) { $line += " "*(($max_length + 5) - $_.length) + "--> $($commands_map.$_)" }
+        write $line
+    }
+}
+
+
+#--------------------------------------------------
 function zip {
     param(
         [string]$from_dir,
@@ -342,9 +374,10 @@ function ss_to_plain {
 
 #--------------------------------------------------
 Set-Alias -Name confirm -Value request_consent -Force
-Set-Alias -Name isr -Value restart_pending -Force
+Set-Alias -Name isrp -Value restart_pending -Force
 Set-Alias -Name hib -Value hibernate -Force
 Set-Alias -Name wait -Value wait_any_key -Force
 Set-Alias -Name fwt -Value get_files_with_text -Force
+Set-Alias -Name listmc -Value list_module_commands -Force
 
 Export-ModuleMember -Function * -Alias *
