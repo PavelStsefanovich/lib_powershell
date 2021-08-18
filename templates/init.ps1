@@ -8,8 +8,8 @@ param (
 ##########  INIT  ###############################################
 
 $ErrorActionPreference = 'Stop'
-$OutputEncoding = New-Object -typename System.Text.UTF8Encoding
-# $OutputEncoding = New-Object -TypeName System.Text.ASCIIEncoding
+$host.PrivateData.ErrorBackgroundColor = $host.UI.RawUI.BackgroundColor
+$PSDefaultParameterValues['*:Encoding'] = 'utf8'
 $SCRIPT_DIR = $PSScriptRoot
 $SCRIPT_NAME = $MyInvocation.MyCommand.Name
 $WORKSPACE = $PWD.Path
