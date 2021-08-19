@@ -227,14 +227,13 @@ function zip {
     param(
         [string]$from_dir,
         [string]$zip_path,
-        [switch]$create_path,
         [parameter()][ValidateSet('Optimal','Fastest','NoCompression')][string]$compression = 'Optimal',
         [switch]$include_basedir
     )
 
-    $from_dir = $from_dir | abspath
-    $zip_path = $zip_path | abspath -verify:$(!$create_path.IsPresent)
-    if ($create_path) { mkdir (Split-Path $zip_path) -Force | Out-Null }
+    $from_dir = $from_dir | abspath -verify
+    $zip_path = $zip_path | abspath
+    mkdir (Split-Path $zip_path) -Force -ErrorAction stop | Out-Null
     Add-Type -AssemblyName "system.io.compression.filesystem"
     [io.compression.zipfile]::CreateFromDirectory($from_dir, $zip_path, $compression, $include_basedir.IsPresent)
 }
@@ -244,12 +243,12 @@ function zip {
 function unzip {
     param(
         [string]$zip_path,
-        [string]$to_dir,
-        [switch]$create_path
+        [string]$to_dir
     )
 
-    $zip_path = $zip_path | abspath
-    $to_dir = $to_dir | abspath -verify:$(!$create_path.IsPresent)
+    $zip_path = $zip_path | abspath -verify
+    $to_dir = $to_dir | abspath
+    mkdir (Split-Path $to_dir) -Force -ErrorAction stop | Out-Null
     Add-Type -AssemblyName "system.io.compression.filesystem"
     [io.compression.zipfile]::ExtractToDirectory($zip_path, $to_dir)
 }
