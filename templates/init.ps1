@@ -1,8 +1,24 @@
 [cmdletbinding(HelpUri = "")]
 param (
-    [string]$parameter1,
+    [string]$parameter1 = $(throw "Mandatory parameter not provided: <parameter1>"),
     [string]$parameter2
 )
+
+
+
+##########  FUNCTIONS  ##########################################
+
+function one {
+    param([string] $param1)
+    write $param1
+}
+
+#--------------------------------------------------
+function two {
+    param([string] $param1)
+    write $param1
+}
+
 
 
 ##########  INIT  ###############################################
