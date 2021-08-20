@@ -28,3 +28,5 @@ param(
 )
 
 exit
+
+if ($PSCmdlet.ParameterSetName -eq "paramset_name") {} # condition based on Parameter Set in use

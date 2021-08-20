@@ -371,6 +371,7 @@ function ss_to_plain {
 }
 
 
+#--------------------------------------------------
 
 function run_sql() {
     [cmdletbinding(DefaultParameterSetName = "integrated")]
@@ -397,7 +398,7 @@ function run_sql() {
     }
 
     try {
-        # connect to database
+        # CONNECT TO DATABASE
         $connection = New-Object System.Data.SqlClient.SqlConnection($connstring)
         $connection.Open()
     }
@@ -440,6 +441,7 @@ function run_sql() {
 
     return $output
 }
+
 
 
 #--------------------------------------------------
