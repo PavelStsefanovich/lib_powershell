@@ -185,8 +185,13 @@ function abspath {
 
 #--------------------------------------------------
 function which {
-    param([string]$executable)
-    (gcm $executable -ErrorAction Stop).Source
+    param(
+        [string]$executable,
+        [switch]$no_errormessage
+    )
+
+    if ($no_errormessage) { (gcm $executable -ErrorAction SilentlyContinue).Source }
+    else { (gcm $executable -ErrorAction Stop).Source }
 }
 
 
@@ -376,7 +381,7 @@ function ss-to-plain {
 function run-sql() {
     [cmdletbinding(DefaultParameterSetName = "integrated")]
     Param (
-        [Parameter(Mandatory = $true)][Alias("s")][string]$server,
+        [Parameter(Mandatory = $false)][Alias("s")][string]$server = '.',
         [Parameter(Mandatory = $true)][Alias("d")][string]$database,
         [Parameter(Mandatory = $true, ParameterSetName = "pscred")][Alias("c")][pscredential]$credential,
         [Parameter(Mandatory = $true, ParameterSetName = "not_integrated")][Alias("u")][string]$user,
@@ -443,6 +448,70 @@ function run-sql() {
 }
 
 
+#--------------------------------------------------
+function run-process {
+    param (
+        [Parameter()][Alias("e")][string]$executable_path = $(throw "Mandatory parameter not provided: <executable_path>."),
+        [Parameter()][Alias("a")][string]$arguments,
+        [Parameter()][Alias("w")][string]$working_directory = $PWD.path,
+        [Parameter()][Alias("c")][PSCredential]$credential,
+        [Parameter()][Alias("nc")][switch]$no_console_output
+    )
+
+    $ErrorActionPreference = 'Stop'
+
+    # resolve executable path
+    $resolved_exe_path = which $executable_path -no_errormessage
+    if ($resolved_exe_path) { $executable_path = $resolved_exe_path }
+    else {
+        try { $executable_path = $executable_path | abspath -verify }
+        catch { throw "Failed to validate parameter <executable_path>: $($_.ToString())" }
+    }
+
+    # resolve working_directory
+    try { $working_directory = $working_directory | abspath -verify }
+    catch { throw "Failed to validate parameter <working_directory>: $($_.ToString())" }
+
+    # build ProcessStartInfo object
+    $ProcessInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $ProcessInfo.FileName = "$executable_path"
+    $ProcessInfo.WorkingDirectory = $working_directory
+    $ProcessInfo.CreateNoWindow = $true
+    $ProcessInfo.RedirectStandardError = $true
+    $ProcessInfo.RedirectStandardOutput = $true
+    $ProcessInfo.UseShellExecute = $false
+    $ProcessInfo.Arguments = $arguments
+
+    # set credentials
+    if ($credential) {
+        $ProcessInfo.Username = $credential.GetNetworkCredential().username
+        $ProcessInfo.Domain = $credential.GetNetworkCredential().Domain
+        $ProcessInfo.Password = $credential.Password
+        wtite-host "running as user '$($ProcessInfo.Username)'"
+    }
+
+    # build and run Process object
+    $Process = New-Object System.Diagnostics.Process
+    $Process.StartInfo = $ProcessInfo
+    $Process.Start() | Out-Null
+
+    if ($no_console_output) { $Process.WaitForExit() }
+    else {
+        while (!$Process.StandardOutput.EndOfStream) {
+            write-host $Process.StandardOutput.ReadLine()
+        }
+    }
+
+    # create output hashtable
+    [hashtable]$output = @{}
+    $output.stdout = $Process.StandardOutput.ReadToEnd()
+    $output.stderr = $Process.StandardError.ReadToEnd()
+    $output.errcode = $Process.ExitCode
+
+    return $output
+}
+
+
 
 #--------------------------------------------------
 Set-Alias -Name confirm -Value request-consent -Force
@@ -452,5 +521,6 @@ Set-Alias -Name wait -Value wait-any-key -Force
 Set-Alias -Name fwt -Value get-files-with-text -Force
 Set-Alias -Name listmc -Value list-module-commands -Force
 Set-Alias -Name sql -Value run-sql -Force
+Set-Alias -Name run -Value run-process -Force
 
 Export-ModuleMember -Function * -Alias *
