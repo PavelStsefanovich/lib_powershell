@@ -371,6 +371,77 @@ function ss_to_plain {
 }
 
 
+
+function run_sql() {
+    [cmdletbinding(DefaultParameterSetName = "integrated")]
+    Param (
+        [Parameter(Mandatory = $true)][Alias("s")][string]$server,
+        [Parameter(Mandatory = $true)][Alias("d")][string]$database,
+        [Parameter(Mandatory = $true, ParameterSetName = "pscred")][Alias("c")][pscredential]$credential,
+        [Parameter(Mandatory = $true, ParameterSetName = "not_integrated")][Alias("u")][string]$user,
+        [Parameter(Mandatory = $true, ParameterSetName = "not_integrated")][Alias("p")][securestring]$passw,
+        [Parameter(Mandatory = $false, ParameterSetName = "integrated")][switch]$use_win_authentication = $true,
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][Alias("q")][string]$query,
+        [Parameter(Mandatory = $false)][Alias("t")][int]$timeout = 0,
+        [Parameter(Mandatory = $false)][Alias("n")][switch]$no_success_message
+    )
+
+    $ErrorActionPreference = 'Stop'
+
+    # build connection string
+    $connstring = "Server=$server; Database=$database; "
+    if ($PSCmdlet.ParameterSetName -eq "integrated") { $connstring += "Trusted_Connection=Yes; Integrated Security=SSPI;" }
+    else {
+        if ($PSCmdlet.ParameterSetName -eq "pscred") { $user = $credential.UserName; $passw = $credential.Password }
+        $connstring += "User ID=$user; Password=$($passw | ss_to_plain);"
+    }
+
+    try {
+        # connect to database
+        $connection = New-Object System.Data.SqlClient.SqlConnection($connstring)
+        $connection.Open()
+    }
+    catch {
+        if ($_.Exception -like '*A network-related or instance-specific error occurred while establishing a connection to SQL Server*') {
+            throw "Connection error: $($_.ToString())"
+        }
+    }
+
+    # build command object
+    $command = $connection.CreateCommand()
+    $command.CommandText = $query
+    $command.CommandTimeout = $timeout
+
+    # build adapter object
+    $adapter = New-Object System.Data.SqlClient.SqlDataAdapter $command
+    $dataset = New-Object System.Data.DataSet
+
+    try {
+        # EXECUTE QUERY
+        $adapter.Fill($dataset) | Out-Null
+
+        # capture ouput
+        $output = $dataset.Tables
+        if (!$output[0]) {
+            $output = New-Object System.Collections.ArrayList
+        }
+
+        # result message
+        if (!$no_success_message) {
+            info 'executed successfully' -success
+        }
+    }
+    catch {
+        throw $_.ToString().replace('Exception calling "Fill" with "1" argument(s):', 'SQL Server returned error:')
+    }
+    finally {
+        $connection.Close()
+    }
+
+    return $output
+}
+
+
 #--------------------------------------------------
 Set-Alias -Name confirm -Value request_consent -Force
 Set-Alias -Name isrp -Value restart_pending -Force
@@ -378,5 +449,6 @@ Set-Alias -Name hib -Value hibernate -Force
 Set-Alias -Name wait -Value wait_any_key -Force
 Set-Alias -Name fwt -Value get_files_with_text -Force
 Set-Alias -Name listmc -Value list_module_commands -Force
+Set-Alias -Name sql -Value run_sql -Force
 
 Export-ModuleMember -Function * -Alias *
