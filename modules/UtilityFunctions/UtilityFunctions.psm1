@@ -43,7 +43,7 @@ function warning {
 
 
 #--------------------------------------------------
-function request_consent {
+function request-consent {
     param([string]$question)
 
     do {
@@ -61,7 +61,7 @@ function request_consent {
 
 
 #--------------------------------------------------
-function wait_any_key {
+function wait-any-key {
     [System.Console]::ReadKey("NoEcho").key | Out-Null
 }
 
@@ -74,7 +74,7 @@ function isadmin {
 
 
 #--------------------------------------------------
-function restart_elevated {
+function restart-elevated {
     param(
         $script_args,
         [switch]$kill_original,
@@ -110,7 +110,7 @@ function restart_elevated {
 
 
 #--------------------------------------------------
-function restart_pending {
+function restart-pending {
     $is_restart_pending = $false
     if (Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending" -EA Ignore) { $is_restart_pending = $true }
     if (Get-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired" -EA Ignore) { $is_restart_pending = $true }
@@ -137,7 +137,7 @@ function hibernate {
 
 
 #--------------------------------------------------
-function jason_to_hsht {
+function jason-to-hashtable {
     param(
         [Parameter(
             Mandatory = $true,
@@ -191,7 +191,7 @@ function which {
 
 
 #--------------------------------------------------
-function list_module_commands {
+function list-module-commands {
     param(
         [Parameter(
             Mandatory = $true,
@@ -255,7 +255,7 @@ function unzip {
 
 
 #--------------------------------------------------
-function get_files_with_text {
+function get-files-with-text {
     param(
         [Parameter(
             Mandatory = $true,
@@ -354,7 +354,7 @@ function base64 {
 
 
 #--------------------------------------------------
-function ss_to_plain {
+function ss-to-plain {
     param(
         [Parameter(
             Mandatory = $true,
@@ -373,7 +373,7 @@ function ss_to_plain {
 
 #--------------------------------------------------
 
-function run_sql() {
+function run-sql() {
     [cmdletbinding(DefaultParameterSetName = "integrated")]
     Param (
         [Parameter(Mandatory = $true)][Alias("s")][string]$server,
@@ -394,7 +394,7 @@ function run_sql() {
     if ($PSCmdlet.ParameterSetName -eq "integrated") { $connstring += "Trusted_Connection=Yes; Integrated Security=SSPI;" }
     else {
         if ($PSCmdlet.ParameterSetName -eq "pscred") { $user = $credential.UserName; $passw = $credential.Password }
-        $connstring += "User ID=$user; Password=$($passw | ss_to_plain);"
+        $connstring += "User ID=$user; Password=$($passw | ss-to-plain);"
     }
 
     try {
@@ -445,12 +445,12 @@ function run_sql() {
 
 
 #--------------------------------------------------
-Set-Alias -Name confirm -Value request_consent -Force
-Set-Alias -Name isrp -Value restart_pending -Force
+Set-Alias -Name confirm -Value request-consent -Force
+Set-Alias -Name isrp -Value restart-pending -Force
 Set-Alias -Name hib -Value hibernate -Force
-Set-Alias -Name wait -Value wait_any_key -Force
-Set-Alias -Name fwt -Value get_files_with_text -Force
-Set-Alias -Name listmc -Value list_module_commands -Force
-Set-Alias -Name sql -Value run_sql -Force
+Set-Alias -Name wait -Value wait-any-key -Force
+Set-Alias -Name fwt -Value get-files-with-text -Force
+Set-Alias -Name listmc -Value list-module-commands -Force
+Set-Alias -Name sql -Value run-sql -Force
 
 Export-ModuleMember -Function * -Alias *
