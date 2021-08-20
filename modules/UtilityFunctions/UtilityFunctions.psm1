@@ -236,7 +236,8 @@ function zip {
         [switch]$include_basedir
     )
 
-    $from_dir = $from_dir | abspath -verify
+    try { $from_dir = $from_dir | abspath -verify }
+    catch { throw "Failed to validate parameter <from_dir>: $($_.ToString())" }    
     $zip_path = $zip_path | abspath
     mkdir (Split-Path $zip_path) -Force -ErrorAction stop | Out-Null
     Add-Type -AssemblyName "system.io.compression.filesystem"
@@ -251,7 +252,8 @@ function unzip {
         [string]$to_dir
     )
 
-    $zip_path = $zip_path | abspath -verify
+    try { $zip_path = $zip_path | abspath -verify }
+    catch { throw "Failed to validate parameter <zip_path>: $($_.ToString())" }    
     $to_dir = $to_dir | abspath
     mkdir (Split-Path $to_dir) -Force -ErrorAction stop | Out-Null
     Add-Type -AssemblyName "system.io.compression.filesystem"
@@ -286,7 +288,7 @@ function get-files-with-text {
         sls -SimpleMatch:$(!$regex.IsPresent) -Pattern $search_string -List).Path
 
     if ($open) {
-        try { $text_editor = which notepad++ } catch {}
+        $text_editor = which notepad++ -no_errormessage
         if (!$text_editor) { $text_editor = 'notepad.exe' }
         $file_list | % { & $text_editor $_ }
     }
