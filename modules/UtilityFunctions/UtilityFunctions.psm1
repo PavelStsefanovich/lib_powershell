@@ -237,7 +237,7 @@ function zip {
     )
 
     try { $from_dir = $from_dir | abspath -verify }
-    catch { throw "Failed to validate parameter <from_dir>: $($_.ToString())" }    
+    catch { throw "Failed to validate parameter <from_dir>: $($_.ToString())" }
     $zip_path = $zip_path | abspath
     mkdir (Split-Path $zip_path) -Force -ErrorAction stop | Out-Null
     Add-Type -AssemblyName "system.io.compression.filesystem"
@@ -253,11 +253,39 @@ function unzip {
     )
 
     try { $zip_path = $zip_path | abspath -verify }
-    catch { throw "Failed to validate parameter <zip_path>: $($_.ToString())" }    
+    catch { throw "Failed to validate parameter <zip_path>: $($_.ToString())" }
     $to_dir = $to_dir | abspath
     mkdir (Split-Path $to_dir) -Force -ErrorAction stop | Out-Null
     Add-Type -AssemblyName "system.io.compression.filesystem"
     [io.compression.zipfile]::ExtractToDirectory($zip_path, $to_dir)
+}
+
+
+#--------------------------------------------------
+function extract-file {
+    param(
+        [string]$name_filter,
+        [string]$zip_path,
+        [string]$to_dir = $($PWD.path)
+    )
+
+    try { $zip_path = $zip_path | abspath -verify }
+    catch { throw "Failed to validate parameter <zip_path>: $($_.ToString())" }
+    $to_dir = $to_dir | abspath
+    mkdir $to_dir -Force -ErrorAction stop | Out-Null
+    [Reflection.Assembly]::LoadWithPartialName( "System.IO.Compression.FileSystem" ) | Out-Null
+    $zipstream = [System.IO.Compression.ZipFile]::OpenRead($zip_path)
+
+    foreach ($zipfile in $zipstream.Entries) {
+        if ($zipfile.Name -like $name_filter) {
+            $destination_file_path = Join-Path $to_dir $zipfile.Name
+            $filestream = New-Object IO.FileStream ($destination_file_path) , 'Append', 'Write', 'Read'
+            $file = $zipfile.Open()
+            $file.CopyTo($filestream)
+            $file.Close()
+            $filestream.Close()
+        }
+    }
 }
 
 
@@ -524,5 +552,7 @@ Set-Alias -Name fwt -Value get-files-with-text -Force
 Set-Alias -Name listmc -Value list-module-commands -Force
 Set-Alias -Name sql -Value run-sql -Force
 Set-Alias -Name run -Value run-process -Force
+Set-Alias -Name unzipf -Value extract-file -Force
+
 
 Export-ModuleMember -Function * -Alias *
