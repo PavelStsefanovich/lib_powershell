@@ -285,7 +285,7 @@ function get-files-with-text {
         [Parameter()][switch]$not_recursevly,
         [Parameter()][switch]$regex,
         [Parameter()][switch]$open,
-        [Parameter()][string]$dump_file
+        [Parameter()][string]$out_file
     )
 
     $ErrorActionPreference = 'Stop'
@@ -299,10 +299,10 @@ function get-files-with-text {
         $file_list | % { & $text_editor $_ }
     }
 
-    if ($dump_file) {
-        if ($dump_file.trim().Length -eq 0) { $dump_file = $(Join-Path $pwd.path 'get_files_with_text_output.txt') }
-        if ($dump_file -notlike '*.txt') { $dump_file += '.txt' }
-        $file_list | Out-File $dump_file -Force -Encoding ascii
+    if ($out_file) {
+        if ($out_file.trim().Length -eq 0) { $out_file = $(Join-Path $pwd.path 'get_files_with_text_output.txt') }
+        if ($out_file -notlike '*.txt') { $out_file += '.txt' }
+        $file_list | Out-File $out_file -Force -Encoding utf8
     }
     else {
         $file_list
@@ -499,6 +499,117 @@ function run-process {
 }
 
 
+#--------------------------------------------------
+function list-installed-software {
+    param (
+        [Parameter(Position = 0)][String]$name_filter = '*',
+        [Parameter(Position = 1)][string]$version_filter = '*',
+        [Parameter(Position = 2)][string]$publisher_filter = '*',
+        [Parameter(Position = 3)][string]$hive_filter = '*',
+        [Parameter(Position = 4)][string[]]$show_properties = @('name'),
+        [Parameter(Position = 5)][string]$out_file
+    )
+
+
+    $uninstallKeys = @(
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall',
+        'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall',
+        'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall')
+
+    $registryAlias = @{
+        'HKEY_LOCAL_MACHINE' = 'HKLM:'
+        'HKEY_CURRENT_USER'  = 'HKCU:'
+    }
+
+    $accepted_properties = @{
+        'name'             = 'DisplayName'
+        'version'          = 'DisplayVersion'
+        'publisher'        = 'Publisher'
+        'install_location' = 'InstallLocation'
+        'uninstall_string' = 'UninstallString'
+        'hive'             = 'PSDrive'
+    }
+
+    $all_software = @()
+
+    foreach ($key in $uninstallKeys) {
+        $software = [array](gp $key\* -ErrorAction SilentlyContinue)
+        if ($software) {
+            $all_software += $software
+        }
+    }
+
+    $filtered_result_set = $all_software |
+    ? { $_.DisplayName.length -gt 0 } |
+    ? { $_.DisplayName -like $name_filter } |
+    ? { $_.DisplayVersion -like $version_filter } |
+    ? { $_.Publisher -like $publisher_filter } |
+    ? { $_.PSDrive -like $hive_filter }
+
+    $sorted_result_set = $filtered_result_set | sort -Property DisplayName
+
+    $optimized_properties = @('DisplayName')
+
+    foreach ($property in $show_properties) {
+        if ($property -eq '*') {
+            $optimized_properties = @('DisplayName', 'DisplayVersion', 'Publisher', 'InstallLocation', 'UninstallString', 'PSDrive')
+            break
+        }
+        $prop_name = $accepted_properties.$property
+        if ($prop_name) {
+            if ($prop_name -notin $optimized_properties) {
+                $optimized_properties += $prop_name
+            }
+        }
+        else {
+            Write-Warning "skipping unknown property '$property'"
+        }
+    }
+
+    $final_result_set = $sorted_result_set | select $optimized_properties
+
+    if ($out_file) {
+        $out_file = $out_file | abspath
+        mkdir (Split-Path $out_file) -Force -ErrorAction Stop | Out-Null
+        $final_result_set | Out-File $out_file -Force -Encoding utf8
+    }
+    else {
+        $final_result_set
+    }
+
+    <#
+    .Description
+    Lists software records found under following registry keys:
+    - HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+    - HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall
+    - HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+    By default lists all records by DisplayName.
+    All parameters are optional.
+    .PARAMETER name_filter
+    Filters results by DisplayName. Accepts wildcards '*'.
+    Example: -name_filter *Java*
+    .PARAMETER version_filter
+    Filters results by DisplayVersion. Accepts wildcards '*'.
+    Example: -version_filter 2.1.*
+    .PARAMETER publisher_filter
+    Filters results by Publisher. Accepts wildcards '*'.
+    Example: -publisher_filter Micro*
+    .PARAMETER hive_filter
+    Filters results by PSDrive (which corresponds to the registry hives). Accepts wildcards '*'.
+    Example: -hive_filter hklm
+    .PARAMETER show_properties
+    Lists software properties (comma-separated) to be incuded into the result set.
+    Accepted values: 'name', 'version', 'publisher', 'install_location', 'uninstall_string', 'hive', '*'.
+    If '*' specified, all supported properties will be included, no need to specify them explicitly.
+    Example: -properties name, version, publisher
+    .PARAMETER out_file_path
+    Specifies file path to output result set. If not specified, result set is displayed in console instead.
+    Example: -out_file_path app_list.txt
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell
+    #>    
+}
+
 
 #--------------------------------------------------
 Set-Alias -Name confirm -Value request-consent -Force
@@ -510,6 +621,6 @@ Set-Alias -Name listmc -Value list-module-commands -Force
 Set-Alias -Name sql -Value run-sql -Force
 Set-Alias -Name run -Value run-process -Force
 Set-Alias -Name unzipf -Value extract-file -Force
-
+Set-Alias -Name listis -Value list-installed-software -Force
 
 Export-ModuleMember -Function * -Alias *
