@@ -379,6 +379,7 @@ function run-sql() {
         [Parameter(Mandatory = $false)][Alias("n")][switch]$no_success_message
     )
 
+    #TODO add ability to dump output into file
     $ErrorActionPreference = 'Stop'
 
     # build connection string
@@ -445,6 +446,7 @@ function run-process {
         [Parameter()][Alias("nc")][switch]$no_console_output
     )
 
+    #TODO add ability to dump output into file
     $ErrorActionPreference = 'Stop'
 
     # resolve executable path
@@ -612,6 +614,30 @@ function list-installed-software {
 
 
 #--------------------------------------------------
+function dir-natural-sort {
+    param (
+        [Parameter(Position = 0)][String]$dir_path = $($PWD.path),
+        [Parameter(Position = 5)][string]$out_file
+    )
+
+    try { $dir_path = $dir_path | abspath -verify }
+    catch { throw "Failed to validate parameter <dir_path>: $($_.ToString())" }
+    $to_natural = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
+    $output = ls | sort $to_natural
+
+    if ($out_file) {
+        $out_file = $out_file | abspath
+        mkdir (Split-Path $out_file) -Force -ErrorAction Stop | Out-Null
+        $output | Out-File $out_file -Force -Encoding utf8
+    }
+    else {
+        $output
+    }
+}
+
+
+
+#--------------------------------------------------
 Set-Alias -Name confirm -Value request-consent -Force
 Set-Alias -Name isrp -Value restart-pending -Force
 Set-Alias -Name hib -Value hibernate -Force
@@ -622,5 +648,6 @@ Set-Alias -Name sql -Value run-sql -Force
 Set-Alias -Name run -Value run-process -Force
 Set-Alias -Name unzipf -Value extract-file -Force
 Set-Alias -Name listis -Value list-installed-software -Force
+Set-Alias -Name sortn -Value dir-natural-sort -Force
 
 Export-ModuleMember -Function * -Alias *
