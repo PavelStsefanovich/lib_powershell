@@ -139,15 +139,8 @@ function hibernate {
 #--------------------------------------------------
 function jason-to-hashtable {
     param(
-        [Parameter(
-            Mandatory = $true,
-            Position = 0,
-            ValueFromPipeline = $true)]
-        [AllowEmptyString()]
-        [String]$json,
-
-        [Parameter()]
-        [Switch]$large
+        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][String]$json = $(throw "Mandatory parameter not provided: <json>."),
+        [Parameter()][switch]$large
     )
 
     begin {
@@ -198,14 +191,8 @@ function which {
 #--------------------------------------------------
 function list-module-commands {
     param(
-        [Parameter(
-            Mandatory = $true,
-            Position = 0)]
-        [ValidateNotNullOrEmpty()]
-        [String]$module_name,
-
-        [Parameter()]
-        [Switch]$as_hashtable
+        [Parameter(Position = 0)][ValidateNotNullOrEmpty()][String]$module_name = $(throw "Mandatory parameter not provided: <module_name>."),
+        [Parameter()][Switch]$as_hashtable
     )
 
     if (!(Get-Module $module_name)) { throw "Module not found: `"$module_name`""}
@@ -292,17 +279,8 @@ function extract-file {
 #--------------------------------------------------
 function get-files-with-text {
     param(
-        [Parameter(
-            Mandatory = $true,
-            Position = 0)]
-        [ValidateNotNullOrEmpty()]
-        [string]$search_string,
-
-        [Parameter(
-            Mandatory = $false,
-            Position = 1)]
-        [string]$search_dir = $($pwd.path),
-
+        [Parameter(Position = 0)][ValidateNotNullOrEmpty()][String]$search_string = $(throw "Mandatory parameter not provided: <search_string>."),
+        [Parameter(Position = 1)][string]$search_dir = $($pwd.path),
         [Parameter()][string]$file_filter = "*",
         [Parameter()][switch]$not_recursevly,
         [Parameter()][switch]$regex,
@@ -335,16 +313,8 @@ function get-files-with-text {
 #--------------------------------------------------
 function sha {
     param(
-        [Parameter(
-            Mandatory = $true,
-            Position = 0,
-            ValueFromPipeline = $true)]
-        [AllowEmptyString()]
-        [String] $text_to_encrypt,
-
-        [parameter(Mandatory = $false)]
-        [ValidateSet('256', '384', '512')]
-        [string]$algorithm = '256'
+        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][String]$text_to_encrypt = $(throw "Mandatory parameter not provided: <text_to_encrypt>."),
+        [parameter()][ValidateSet('256', '384', '512')][string]$algorithm = '256'
     )
 
     begin {
@@ -370,15 +340,8 @@ function sha {
 #--------------------------------------------------
 function base64 {
     param(
-        [Parameter(
-            Mandatory = $true,
-            Position = 0,
-            ValueFromPipeline = $true)]
-        [AllowEmptyString()]
-        [String] $text_to_convert,
-
-        [parameter(Mandatory = $false)]
-        [switch]$decrypt
+        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][String]$text_to_convert = $(throw "Mandatory parameter not provided: <text_to_convert>."),
+        [parameter()][switch]$decrypt
     )
 
     process {
@@ -390,13 +353,7 @@ function base64 {
 
 #--------------------------------------------------
 function ss-to-plain {
-    param(
-        [Parameter(
-            Mandatory = $true,
-            Position = 0,
-            ValueFromPipeline = $true)]
-        [System.Security.SecureString]$s_sting
-    )
+    param([Parameter(Position = 0, ValueFromPipeline = $true)][System.Security.SecureString]$s_sting = $(throw "Mandatory parameter not provided: <s_sting>."))
 
     process {
         $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($s_sting)
