@@ -377,10 +377,10 @@ function run-sql() {
         [Parameter(Mandatory = $false, ParameterSetName = "integrated")][switch]$use_win_authentication = $true,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][Alias("q")][string]$query,
         [Parameter(Mandatory = $false)][Alias("t")][int]$timeout = 0,
+        [Parameter(Mandatory = $true)][Alias("o")][string]$out_file,
         [Parameter(Mandatory = $false)][Alias("n")][switch]$no_success_message
     )
 
-    #TODO add ability to dump output into file
     $ErrorActionPreference = 'Stop'
 
     # build connection string
@@ -433,7 +433,15 @@ function run-sql() {
         $connection.Close()
     }
 
-    return $output
+    # dump to file
+    if ($out_file) {
+        $out_file = $out_file | abspath
+        mkdir (Split-Path $out_file) -Force | Out-Null
+        $output | Out-File $out_file -Force
+    }
+    else {
+        return $output
+    }
 }
 
 
@@ -447,7 +455,6 @@ function run-process {
         [Parameter()][Alias("nc")][switch]$no_console_output
     )
 
-    #TODO add ability to dump output into file
     $ErrorActionPreference = 'Stop'
 
     # resolve executable path
