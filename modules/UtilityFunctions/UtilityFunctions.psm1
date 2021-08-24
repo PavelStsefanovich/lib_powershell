@@ -1,3 +1,4 @@
+$PSDefaultParameterValues['*:Encoding'] = 'utf8'
 $message_padding = "  "
 
 
@@ -302,7 +303,7 @@ function get-files-with-text {
     if ($out_file) {
         if ($out_file.trim().Length -eq 0) { $out_file = $(Join-Path $pwd.path 'get_files_with_text_output.txt') }
         if ($out_file -notlike '*.txt') { $out_file += '.txt' }
-        $file_list | Out-File $out_file -Force -Encoding utf8
+        $file_list | Out-File $out_file -Force
     }
     else {
         $file_list
@@ -573,7 +574,7 @@ function list-installed-software {
     if ($out_file) {
         $out_file = $out_file | abspath
         mkdir (Split-Path $out_file) -Force -ErrorAction Stop | Out-Null
-        $final_result_set | Out-File $out_file -Force -Encoding utf8
+        $final_result_set | Out-File $out_file -Force
     }
     else {
         $final_result_set
@@ -614,7 +615,7 @@ function list-installed-software {
 
 
 #--------------------------------------------------
-function file_tabs-to-spaces {
+function file-tabs-to-spaces {
     param(
         [Parameter(Position = 0)][string]$file_path,
         [Parameter(Position = 1)][string]$out_file = $file_path,
@@ -632,7 +633,7 @@ function file_tabs-to-spaces {
     }
     else {
         $out_file = $out_file | abspath
-        mkdir (Split-Path $out_file) -Force -ErrorAction Stop | Out-Null
+        mkdir (Split-Path $out_file) -Force | Out-Null
     }
 
     # process file content
@@ -652,6 +653,48 @@ function file_tabs-to-spaces {
 
 
 #--------------------------------------------------
+function file-hex-dump {
+    param(
+        [Parameter(Position = 0)][Alias("file")][string]$file_path,
+        [Parameter(Position = 1)][Alias("width")][int]$table_width = 20,
+        [Parameter(Position = 2)][Alias("len")][int]$number_of_bytes = -1, # defaults to all
+        [Parameter(Position = 3)][string]$out_file
+    )
+
+    $ErrorActionPreference = 'Stop'
+    $OFS = ""
+
+    # validate input parameters
+    try { $file_path = $file_path | abspath -verify }
+    catch { throw "Failed to validate parameter <file_path>: $($_.ToString())" }
+    if ($out_file) {
+        $out_file = $out_file | abspath
+        mkdir (Split-Path $out_file) -Force | Out-Null
+        ni $out_file -Force | Out-Null
+    }
+
+    # process file
+    Get-Content -Encoding byte `
+                    -Path $file_path `
+                    -ReadCount $table_width `
+                    -TotalCount $number_of_bytes | `
+        % {
+            $record = $_
+            if (($record -eq 0).count -ne $table_width) {
+                $hex = $record | % { " " + ("{0:x}" -f $_).PadLeft(2, "0") }                    
+                $char = $record | `
+                    % {
+                        if ([char]::IsLetterOrDigit($_)) { [char] $_ }
+                        else { "." }
+                    }
+                if ($out_file) { "$hex $char" | Out-File $out_file -Force -Append }
+                else { "$hex $char" }
+            }
+        }
+}
+
+
+#--------------------------------------------------
 function dir-natural-sort {
     param (
         [Parameter(Position = 0)][string]$dir_path = $($PWD.path),
@@ -666,7 +709,7 @@ function dir-natural-sort {
     if ($out_file) {
         $out_file = $out_file | abspath
         mkdir (Split-Path $out_file) -Force -ErrorAction Stop | Out-Null
-        $output | Out-File $out_file -Force -Encoding utf8
+        $output | Out-File $out_file -Force
     }
     else {
         $output
