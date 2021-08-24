@@ -139,7 +139,7 @@ function hibernate {
 #--------------------------------------------------
 function jason-to-hashtable {
     param(
-        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][String]$json = $(throw "Mandatory parameter not provided: <json>."),
+        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$json = $(throw "Mandatory parameter not provided: <json>."),
         [Parameter()][switch]$large
     )
 
@@ -191,8 +191,8 @@ function which {
 #--------------------------------------------------
 function list-module-commands {
     param(
-        [Parameter(Position = 0)][ValidateNotNullOrEmpty()][String]$module_name = $(throw "Mandatory parameter not provided: <module_name>."),
-        [Parameter()][Switch]$as_hashtable
+        [Parameter(Position = 0)][ValidateNotNullOrEmpty()][string]$module_name = $(throw "Mandatory parameter not provided: <module_name>."),
+        [Parameter()][switch]$as_hashtable
     )
 
     if (!(Get-Module $module_name)) { throw "Module not found: `"$module_name`""}
@@ -279,7 +279,7 @@ function extract-file {
 #--------------------------------------------------
 function get-files-with-text {
     param(
-        [Parameter(Position = 0)][ValidateNotNullOrEmpty()][String]$search_string = $(throw "Mandatory parameter not provided: <search_string>."),
+        [Parameter(Position = 0)][ValidateNotNullOrEmpty()][string]$search_string = $(throw "Mandatory parameter not provided: <search_string>."),
         [Parameter(Position = 1)][string]$search_dir = $($pwd.path),
         [Parameter()][string]$file_filter = "*",
         [Parameter()][switch]$not_recursevly,
@@ -313,7 +313,7 @@ function get-files-with-text {
 #--------------------------------------------------
 function sha {
     param(
-        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][String]$text_to_encrypt = $(throw "Mandatory parameter not provided: <text_to_encrypt>."),
+        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$text_to_encrypt = $(throw "Mandatory parameter not provided: <text_to_encrypt>."),
         [parameter()][ValidateSet('256', '384', '512')][string]$algorithm = '256'
     )
 
@@ -340,7 +340,7 @@ function sha {
 #--------------------------------------------------
 function base64 {
     param(
-        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][String]$text_to_convert = $(throw "Mandatory parameter not provided: <text_to_convert>."),
+        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$text_to_convert = $(throw "Mandatory parameter not provided: <text_to_convert>."),
         [parameter()][switch]$decrypt
     )
 
@@ -504,7 +504,7 @@ function run-process {
 #--------------------------------------------------
 function list-installed-software {
     param (
-        [Parameter(Position = 0)][String]$name_filter = '*',
+        [Parameter(Position = 0)][string]$name_filter = '*',
         [Parameter(Position = 1)][string]$version_filter = '*',
         [Parameter(Position = 2)][string]$publisher_filter = '*',
         [Parameter(Position = 3)][string]$hive_filter = '*',
@@ -609,14 +609,52 @@ function list-installed-software {
     Example: -out_file_path app_list.txt
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell
-    #>    
+    #>
+}
+
+
+#--------------------------------------------------
+function file_tabs-to-spaces {
+    param(
+        [Parameter(Position = 0)][string]$file_path,
+        [Parameter(Position = 1)][string]$out_file = $file_path,
+        [Parameter(Position = 2)][int]$tab_size = 4
+    )
+
+    $ErrorActionPreference = 'Stop'
+    $converted_content = @()
+
+    # validate input parameters
+    try { $file_path_absolute = $file_path | abspath -verify }
+    catch { throw "Failed to validate parameter <file_path>: $($_.ToString())" }
+    if ($out_file -eq $file_path) {
+        $out_file = $file_path_absolute
+    }
+    else {
+        $out_file = $out_file | abspath
+        mkdir (Split-Path $out_file) -Force -ErrorAction Stop | Out-Null
+    }
+
+    # process file content
+    Get-Content $file_path_absolute | % {
+        $line = $_
+        while ( $true ) {
+            $i = $line.IndexOf([char] 9)
+            if ( $i -eq -1 ) { break }
+            if ( $tab_size -gt 0 ) { $pad = " " * ($tab_size - ($i % $tab_size)) }
+            else { $pad = "" }
+            $line = $line -replace "^([^\t]{$i})\t(.*)$", "`$1$pad`$2"
+        }
+        $converted_content += $line
+    }
+    Set-Content $out_file -Value $converted_content -Force
 }
 
 
 #--------------------------------------------------
 function dir-natural-sort {
     param (
-        [Parameter(Position = 0)][String]$dir_path = $($PWD.path),
+        [Parameter(Position = 0)][string]$dir_path = $($PWD.path),
         [Parameter(Position = 5)][string]$out_file
     )
 
