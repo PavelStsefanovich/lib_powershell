@@ -1,5 +1,5 @@
 # UtilityFunctions
-*Common console operations and standartized console output messaging*
+*Common operations and standardized console output messaging*
 
 ### Installation
     Install-Module -Name UtilityFunctions
@@ -15,26 +15,37 @@ https://www.powershellgallery.com/packages/UtilityFunctions
 
 ### Module Content
 
-
 | Function  | Alias | Description |
 | ------------- | ------------- | ------------- |
-| newline |  | Print newline into console |
-| error |  | Print error message into console |
-| info |  | Print info message into console |
-| warning |  | Print warning message into console |
-| request_consent | confirm | Ask user for confirmation (y/n) |
-| wait_any_key | wait | Wait for user to press any key |
-| isadmin |  | Check if current console is running as admin |
-| restart_elevated |  | Restart script as administrator |
-| restart_pending | isr | Check if system restart pending |
-| hibernate | hib | Put computer to sleep |
-| jason_to_hsht |  | Convert json object to hashtable |
 | abspath |  | Convert path to absolute path |
-| which |  | Print file source path |
-| list_module_commands | listmc | List module commands with aliases |
-| zip |  | Compress directory into .zip archive |
-| unzip |  | Extract .zip archive into directory |
-| get_files_with_text | fwt | Print (or open) filepaths that contain search text |
-| sha |  | Encrypt text with SHA- algorithms  |
 | base64 |  | Encrypt/Decrypt text with base64 |
-| ss_to_plain |  | Convert SecureString into plain text |
+| dir-natural-sort | dsort | Sort numbered directory content naturally |
+| error |  | Print error message into console |
+| extract-file | unzipf | Extract specific files from .zip archive |
+| file-hex-dump |  | Generate HEX table for a file |
+| file-tabs-to-spaces |  | Replace tabs with spaces in a file |
+| get-files-with-text | fwt | Print (or open) texfiles that contain search string |
+| hibernate | hib | Put computer to sleep |
+| info |  | Print info message into console |
+| isadmin |  | Check if current console/script is running as admin |
+| is-restart-pending | isrp | Check if system restart pending |
+| json-to-hashtable | jth | Convert json into hashtable |
+| list-installed-software | listis | List apps that appear in 'Uninstall Programs' |
+| list-module-commands | listmc | List module commands with aliases |
+| newline | lf | Print newline(s) into console |
+| request-consent | confirm | Ask user for confirmation (y/n) |
+| restart-elevated |  | Restart script as administrator |
+| run-process | run | Run external process and return standard streams & exit code |
+| run-sql | sql | Execute SQL query and return result |
+| sha |  | Encrypt text with SHA- algorithms  |
+| ss-to-plain | sstp | Convert SecureString into plain text |
+| unzip |  | Extract .zip archive into directory |
+| wait-any-key | wait | Wait for user to press any key |
+| warning |  | Print warning message into console |
+| which |  | Print command source path |
+| zip |  | Compress directory into .zip archive |
+
+### Module Commands Manuals
+Run the following in the console to get details about command's purpose and usage:
+
+    help <command-name> -Full

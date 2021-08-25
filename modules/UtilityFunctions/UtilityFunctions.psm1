@@ -5,7 +5,7 @@ $message_padding = "  "
 #--------------------------------------------------
 function newline {
     param([int]$count = 1)
-    Write-Host ("$message_padding`n" * $count).TrimEnd()
+    1..$count | % { Write-Host "`n" }
 }
 
 
@@ -48,7 +48,7 @@ function request-consent {
     param([string]$question)
 
     do {
-        warning (" (?) $question ( Y: yes / N: no): ") -no_prefix
+        warning (" (?) $question ( y/n ): ") -no_prefix
         $key = [System.Console]::ReadKey("NoEcho").key
         if ($key -notin 'Y', 'N') { error "It's a yes/no question." }
     }
@@ -111,7 +111,7 @@ function restart-elevated {
 
 
 #--------------------------------------------------
-function restart-pending {
+function is-restart-pending {
     $is_restart_pending = $false
     if (Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending" -EA Ignore) { $is_restart_pending = $true }
     if (Get-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired" -EA Ignore) { $is_restart_pending = $true }
@@ -133,14 +133,14 @@ function restart-pending {
 #--------------------------------------------------
 function hibernate {
     Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.Application]::SetSuspendState("Suspend", $false, $true);
+    [System.Windows.Forms.Application]::SetSuspendState("Suspend", $false, $true) | Out-Null
 }
 
 
 #--------------------------------------------------
-function jason-to-hashtable {
+function json-to-hashtable {
     param(
-        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$json = $(throw "Mandatory parameter not provided: <json>."),
+        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$json,
         [Parameter()][switch]$large
     )
 
@@ -314,7 +314,7 @@ function get-files-with-text {
 #--------------------------------------------------
 function sha {
     param(
-        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$text_to_encrypt = $(throw "Mandatory parameter not provided: <text_to_encrypt>."),
+        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$text_to_encrypt,
         [parameter()][ValidateSet('256', '384', '512')][string]$algorithm = '256'
     )
 
@@ -341,7 +341,7 @@ function sha {
 #--------------------------------------------------
 function base64 {
     param(
-        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$text_to_convert = $(throw "Mandatory parameter not provided: <text_to_convert>."),
+        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$text_to_convert,
         [parameter()][switch]$decrypt
     )
 
@@ -354,7 +354,7 @@ function base64 {
 
 #--------------------------------------------------
 function ss-to-plain {
-    param([Parameter(Position = 0, ValueFromPipeline = $true)][System.Security.SecureString]$s_sting = $(throw "Mandatory parameter not provided: <s_sting>."))
+    param([Parameter(Position = 0, ValueFromPipeline = $true)][System.Security.SecureString]$s_sting)
 
     process {
         $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($s_sting)
@@ -369,16 +369,16 @@ function ss-to-plain {
 function run-sql() {
     [cmdletbinding(DefaultParameterSetName = "integrated")]
     Param (
-        [Parameter(Mandatory = $false)][Alias("s")][string]$server = '.',
+        [Parameter()][Alias("s")][string]$server = '.',
         [Parameter(Mandatory = $true)][Alias("d")][string]$database,
         [Parameter(Mandatory = $true, ParameterSetName = "pscred")][Alias("c")][pscredential]$credential,
         [Parameter(Mandatory = $true, ParameterSetName = "not_integrated")][Alias("u")][string]$user,
         [Parameter(Mandatory = $true, ParameterSetName = "not_integrated")][Alias("p")][securestring]$passw,
-        [Parameter(Mandatory = $false, ParameterSetName = "integrated")][switch]$use_win_authentication = $true,
+        [Parameter(ParameterSetName = "integrated")][switch]$use_win_authentication = $true,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][Alias("q")][string]$query,
-        [Parameter(Mandatory = $false)][Alias("t")][int]$timeout = 0,
+        [Parameter()][Alias("t")][int]$timeout = 0,
         [Parameter(Mandatory = $true)][Alias("o")][string]$out_file,
-        [Parameter(Mandatory = $false)][Alias("n")][switch]$no_success_message
+        [Parameter()][Alias("n")][switch]$no_success_message
     )
 
     $ErrorActionPreference = 'Stop'
@@ -616,7 +616,7 @@ function list-installed-software {
     Specifies file path to output result set. If not specified, result set is displayed in console instead.
     Example: -out_file_path app_list.txt
     .LINK
-    https://github.com/PavelStsefanovich/lib_powershell
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
     #>
 }
 
@@ -726,8 +726,11 @@ function dir-natural-sort {
 
 
 #--------------------------------------------------
+Set-Alias -Name lf -Value newline -Force
 Set-Alias -Name confirm -Value request-consent -Force
-Set-Alias -Name isrp -Value restart-pending -Force
+Set-Alias -Name jth -Value json-to-hashtable -Force
+Set-Alias -Name sstp -Value ss-to-plain -Force
+Set-Alias -Name isrp -Value is-restart-pending -Force
 Set-Alias -Name hib -Value hibernate -Force
 Set-Alias -Name wait -Value wait-any-key -Force
 Set-Alias -Name fwt -Value get-files-with-text -Force
@@ -736,6 +739,6 @@ Set-Alias -Name sql -Value run-sql -Force
 Set-Alias -Name run -Value run-process -Force
 Set-Alias -Name unzipf -Value extract-file -Force
 Set-Alias -Name listis -Value list-installed-software -Force
-Set-Alias -Name sortn -Value dir-natural-sort -Force
+Set-Alias -Name dsort -Value dir-natural-sort -Force
 
 Export-ModuleMember -Function * -Alias *
