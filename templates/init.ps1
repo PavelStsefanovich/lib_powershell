@@ -21,8 +21,10 @@ function two {
 
 
 
-##########  INIT  ###############################################
+##########  MAIN  ###############################################
 
+#--------------------------------------------------
+# INIT
 $ErrorActionPreference = 'Stop'
 $host.PrivateData.ErrorBackgroundColor = $host.UI.RawUI.BackgroundColor
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
@@ -33,6 +35,5 @@ $IS_VERBOSE = $PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent
 if (!$IS_VERBOSE) { $IS_VERBOSE = $false }
 
 
-
-##########  MAIN  ###############################################
-
+#--------------------------------------------------
+# DO SOMETHING

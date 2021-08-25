@@ -12,18 +12,17 @@ Param (
 
 
 
+##########  MAIN  ###############################################
 
-##########  INIT  ###############################################
-
+#--------------------------------------------------
+# INIT
 $ErrorActionPreference = 'Stop'
 $host.PrivateData.ErrorBackgroundColor = $host.UI.RawUI.BackgroundColor
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
 if (!(Get-Module UtilityFunctions)) { Import-Module UtilityFunctions -Force -DisableNameChecking }
 
 
-
-##########  MAIN  ###############################################
-
+#--------------------------------------------------
 info "verifying module location: " -no_newline
 $MODULE_PATH = $module_dir_path | abspath -verify
 $MODULE_NAME = Split-Path $MODULE_PATH -Leaf
