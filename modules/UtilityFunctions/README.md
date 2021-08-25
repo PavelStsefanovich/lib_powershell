@@ -46,6 +46,6 @@ https://www.powershellgallery.com/packages/UtilityFunctions
 | zip |  | Compress directory into .zip archive |
 
 ### Module Commands Manuals
-Run the following in the console to get details about command's purpose and usage:
+Run the following in the console to get details about a command:
 
     help <command-name> -Full
