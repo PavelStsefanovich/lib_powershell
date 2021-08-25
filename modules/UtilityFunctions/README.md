@@ -1,5 +1,5 @@
 # UtilityFunctions
-*Common operations and standardized console output messaging*
+*Common operations and standardized console output messages*
 
 ### Installation
     Install-Module -Name UtilityFunctions
