@@ -607,28 +607,58 @@ function get-files-with-text {
 
 #--------------------------------------------------
 function sha {
+    [cmdletbinding(DefaultParameterSetName = "text")]
     param(
-        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$text_to_encrypt,
-        [parameter()][ValidateSet('256', '384', '512')][string]$algorithm = '256'
+        [Parameter(ParameterSetName = "text", Position = 0, ValueFromPipeline = $true)][AllowEmptyString()]
+        [Alias("text")][string]$text_to_hash,
+    
+        [Parameter(ParameterSetName = "file", Position = 0)][ValidateNotNullOrEmpty()]
+        [Alias("file")][string]$file_to_hash,
+        
+        [parameter()][ValidateSet('1', '256', '384', '512')][string]$algorithm = '256'
     )
 
     begin {
+        $algorithm_prefix = "SHA$algorithm`:"
         $algorithm_name = "SHA$algorithm`Managed"
         $hasher = new-object System.Security.Cryptography.$algorithm_name
     }
 
     process {
-        $byte_array = [System.Text.Encoding]::UTF8.GetBytes($text_to_encrypt)
-        $hash_byte_array = $hasher.ComputeHash($byte_array)
+        $ErrorActionPreference = 'Stop'
 
-        foreach ($byte in $hash_byte_array) {
-            $encrypted_text += $byte.ToString()
+        if ($PSCmdlet.ParameterSetName -eq 'file') {
+            try { $file_to_hash = $file_to_hash | abspath -verify }
+            catch { throw "Failed to validate parameter <file_to_hash>: $($_.ToString())" }
+            $byte_array = [System.IO.File]::ReadAllBytes($file_to_hash)
         }
-
-        $encrypted_text
+        else { $byte_array = [System.Text.Encoding]::UTF8.GetBytes($text_to_hash) }
+        
+        $hash_byte_array = $hasher.ComputeHash($byte_array)
+        $hash_byte_array | % { $hash_string += $_.ToString() }
+        "$algorithm_prefix $hash_string"
     }
 
     end { $hasher = $null }
+
+    <#
+    .Description
+    Generates hash for text or file using SHA- algorithm of choice. Defaults to SHA256.
+    .PARAMETER text_to_hash
+    Specifies text to be hashed. Allows ValueFromPipeline.
+    Example 1: sha -text "some text"
+    Example 2: "some text" | sha
+    .PARAMETER file_to_hash
+    Specifies absolute or relative path to the file for which hash string will be generated.
+    Path will be converted to absolute path and must exist, otherwise throws exception.
+    Example: -file_to_hash <path/to/file>
+    .PARAMETER algorithm
+    Specifies type of SHA- algorithm. Accepted values: '1', '256', '384', '512'.
+    Defaults to '256'
+    Example: -algorithm 384
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -1019,6 +1049,11 @@ function dir-natural-sort {
     }
 }
 
+
+#--------------------------------------------------
+# function ll {
+
+# }
 
 
 #--------------------------------------------------
