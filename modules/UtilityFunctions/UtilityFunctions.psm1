@@ -6,6 +6,18 @@ $message_padding = "  "
 function newline {
     param([int]$count = 1)
     1..$count | % { Write-Host "`n" }
+
+    <#
+    .SYNOPSIS
+    Alias: lf
+    .Description
+    Prints newline character(s) into the console.
+    .PARAMETER count
+    Specifies amount of consequent newlines to be printed. Defaults to 1.
+    Example: -count 5
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -13,6 +25,16 @@ function newline {
 function error {
     param([string]$message)
     Write-Host ($message_padding + "ERROR: $message`n") -ForegroundColor Red
+
+    <#
+    .Description
+    Prints error message into the console following defined format: "ERROR: <message>"
+    .PARAMETER message
+    Message to display.
+    Example: -message "Something went wrong."
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -27,6 +49,22 @@ function info {
     $color = 'Gray'
     if ($success) { $color = 'Green' }
     Write-Host ($message_padding + $message) -ForegroundColor $color -NoNewline:$no_newline
+
+    <#
+    .Description
+    Prints info message into the console. Optionally colors text green and omits trailing newline.
+    .PARAMETER message
+    Message to display.
+    Example: -message "Some info."
+    .PARAMETER no_newline
+    Omits trailing newline, so the next console output will be printed to the same line.
+    Example: -no_newline
+    .PARAMETER success
+    Colors message text green.
+    Example: -success
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -40,6 +78,23 @@ function warning {
 
     if ($no_prefix) { Write-Host ($message_padding + $message) -ForegroundColor Yellow -NoNewline:$no_newline }
     else { Write-Host ($message_padding + "WARNING: $message") -ForegroundColor Yellow -NoNewline:$no_newline }
+
+    <#
+    .Description
+    Prints warning message into the console following defined format: "WARNING: <message>" and colors it yellow.
+    Optionally omits 'WARNING' prefix and trailing newline.
+    .PARAMETER message
+    Message to display.
+    Example: -message "Note something!"
+    .PARAMETER no_newline
+    Omits trailing newline, so the next console output will be printed to the same line.
+    Example: -no_newline
+    .PARAMETER no_prefix
+    Omits 'WARNING:' prefix.
+    Example: -no_prefix
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -58,12 +113,36 @@ function request-consent {
         'Y' { info "<yes>"; return $true }
         'N' { info "<no>"; return $false }
     }
+
+    <#
+    .SYNOPSIS
+    Alias: confirm
+    .Description
+    Prints yes/no question into the console following defined format: "(?) <question> ( y/n ):" and awaits a key press from the user.
+    Only accepts y(Y) and n(N) for response and gives user a hint otherwise.
+    Returns True (y) or False (n).
+    .PARAMETER question
+    Message to display.
+    Example: -question "Do you want to continue?"
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
 #--------------------------------------------------
 function wait-any-key {
     [System.Console]::ReadKey("NoEcho").key | Out-Null
+
+    <#
+    .SYNOPSIS
+    Alias: wait
+    .Description
+    Halts script/command execution and awaits a key press from the user.
+    Does not accept any parameters.
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -71,6 +150,14 @@ function wait-any-key {
 function isadmin {
     return ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
         [Security.Principal.WindowsBuiltInRole] "Administrator")
+
+    <#
+    .Description
+    Returns True if current console/script runs as admin and False otherwise.
+    Does not accept any parameters.
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -79,7 +166,7 @@ function restart-elevated {
     param(
         $script_args,
         [switch]$kill_original,
-        [string]$current_dir = $PWD.path
+        [string]$working_directory = $PWD.path
     )
 
     if ($MyInvocation.ScriptName -eq "") { throw 'Script must be saved as a .ps1 file.' }
@@ -88,7 +175,7 @@ function restart-elevated {
     try {
         $script_fullpath = $MyInvocation.ScriptName
         $argline = "-noprofile -nologo -noexit"
-        $argline += " -Command cd `"$current_dir`"; `"$script_fullpath`""
+        $argline += " -Command cd `"$working_directory`"; `"$script_fullpath`""
 
         if ($script_args) {
             $script_args.GetEnumerator() | % {
@@ -107,6 +194,23 @@ function restart-elevated {
         error "Failed to restart script with elevated premissions."
         throw $_
     }
+
+    <#
+    .Description
+    Restarts current script as administrator. Allows to pass current arguments.
+    Optionally kills original (non-admin) script/console.
+    .PARAMETER script_args
+    Arguments to be passed to the elevated script.
+    Example: -script_args $PSBoundParameters
+    .PARAMETER kill_original
+    Kills original (non-admin) script/console when elevated script has started.
+    Example: -kill_original
+    .PARAMETER working_directory
+    Specifies directory where elevated script should be started. Defaults to current directory.
+    Example: -working_directory <some/path>
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -127,6 +231,16 @@ function is-restart-pending {
     catch { }
 
     return $is_restart_pending
+
+    <#
+    .SYNOPSIS
+    Alias: isrp
+    .Description
+    Returns True if system restart is pending and False otherwise.
+    Does not accept any parameters.
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -134,6 +248,16 @@ function is-restart-pending {
 function hibernate {
     Add-Type -AssemblyName System.Windows.Forms
     [System.Windows.Forms.Application]::SetSuspendState("Suspend", $false, $true) | Out-Null
+
+    <#
+    .SYNOPSIS
+    Alias: hib
+    .Description
+    Puts computer to sleep.
+    Does not accept any parameters.
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -158,22 +282,60 @@ function json-to-hashtable {
     process { $jsSerializer.Deserialize($json, 'Hashtable') }
 
     end { $jsSerializer = $null }
+
+    <#
+    .SYNOPSIS
+    Alias: jth
+    .Description
+    Converts a string in json format into hashtable.
+    This is a replacement for PowerShell built-in ConvertFrom-Json function, which returns PSObject.
+    Allows pipeline input.
+    .PARAMETER json
+    String in json format to be converted. Allows ValueFromPipeline.
+    Example 1: json-to-hashtable -json <json_string>
+    Example 2: <json_string> | json-to-hashtable
+    .PARAMETER large
+    Increases maximum allowed size of the json string. Use if fails otherwise.
+    Example: -large
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
 #--------------------------------------------------
 function abspath {
     param(
-        [string]$parent = $pwd.Path,
-        [switch]$verify
+        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$path,
+        [Parameter()][string]$parent = $pwd.Path,
+        [Parameter()][switch]$verify
     )
 
     process {
-        if ([System.IO.Path]::IsPathRooted($_)) { $path = $_}
-        else { $path = (Join-Path $parent $_) }
-        if ($verify) { $path = (Resolve-Path $path -ErrorAction Stop).Path }
-        $path
+        if ([System.IO.Path]::IsPathRooted($path)) { $abspath = $path}
+        else { $abspath = (Join-Path ($parent | abspath) $path) }
+        if ($verify) { $abspath = (Resolve-Path $abspath -ErrorAction Stop).Path }
+        $abspath
     }
+
+    <#
+    .Description
+    Converts any path into absolute path. Optionally verifies if path exists.
+    Allows pipeline input.
+    .PARAMETER path
+    Absolute or relative path to be converted. Allows ValueFromPipeline.
+    Example 1: abspath -path <relative/path>
+    Example 2: <relative/path> | abspath
+    .PARAMETER parent
+    Specifies parent path (absolute or relative to current directory) to resolve from.
+    Parent path itself will be resolved first.
+    Example: -parent <some/path>
+    .PARAMETER verify
+    Verifies if resolved path exists, throws excepion otherwise.
+    Example: -verify
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -186,6 +348,20 @@ function which {
 
     if ($no_errormessage) { (gcm $executable -ErrorAction SilentlyContinue).Source }
     else { (gcm $executable -ErrorAction Stop).Source }
+
+    <#
+    .Description
+    Returns executable's source path if it's discoverable from the command line, throws exception otherwise.
+    Optionally returns Null instead of throwing exception.
+    .PARAMETER executable
+    Specifies executable name (<base_name> or <base_name>.exe) to lookup.
+    Example: -executable <executable_name>
+    .PARAMETER no_errormessage
+    Returns Null instead of throwing exception in case executable source path cannot be resolved.
+    Example: -no_errormessage
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -212,6 +388,22 @@ function list-module-commands {
         if ($commands_map.$_) { $line += " "*(($max_length + 5) - $_.length) + "--> $($commands_map.$_)" }
         write $line
     }
+
+    <#
+    .SYNOPSIS
+    Alias: listmc
+    .Description
+    Prints available commands of a PowerShell module together with their aliases.
+    Optionally returns result as hashtable instead of printing to console.
+    .PARAMETER module_name
+    Specifies name of the module for which list of commands should be displayed.
+    Example: -module_name <ModuleName>
+    .PARAMETER as_hashtable
+    Returns commands with aliases as hashtable instead of printing to console.
+    Example: -as_hashtable
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -230,6 +422,29 @@ function zip {
     mkdir (Split-Path $zip_path) -Force -ErrorAction stop | Out-Null
     Add-Type -AssemblyName "system.io.compression.filesystem"
     [io.compression.zipfile]::CreateFromDirectory($from_dir, $zip_path, $compression, $include_basedir.IsPresent)
+
+    <#
+    .Description
+    Compresses a directory into .zip archive.
+    Optionally includes target directory as a root directory in the archive.
+    .PARAMETER from_dir
+    Specifies absolute or relative path to the directory to be compressed.
+    Path will be converted to absolute path and must exist, otherwise throws exception.
+    Example: -from_dir <path/to/dir>
+    .PARAMETER zip_path
+    Specifies absolute or relative path to the output .zip file.
+    Missing subdirectories will be created.
+    Example: -zip_path <path/to/file.zip>
+    .PARAMETER compression
+    Specifies compression level. Accepted values: 'Optimal', 'Fastest, 'NoCompression'.
+    Defaults to 'Optimal'
+    Example: -compression <Fastest>
+    .PARAMETER include_basedir
+    Includes target directory as a root directory in the archive (Windows style).
+    Example: -include_basedir
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -246,13 +461,28 @@ function unzip {
     mkdir (Split-Path $to_dir) -Force -ErrorAction stop | Out-Null
     Add-Type -AssemblyName "system.io.compression.filesystem"
     [io.compression.zipfile]::ExtractToDirectory($zip_path, $to_dir)
+
+    <#
+    .Description
+    Extracts .zip archive into a directory.
+    .PARAMETER zip_path
+    Specifies absolute or relative path to the .zip file.
+    Path will be converted to absolute path and must exist, otherwise throws exception.
+    Example: -zip_path <path/to/file.zip>
+    .PARAMETER to_dir
+    Specifies absolute or relative path to the directory to be compressed.
+    Missing subdirectories will be created.
+    Example: -to_dir <path/to/dir>
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
 #--------------------------------------------------
 function extract-file {
     param(
-        [string]$name_filter,
+        [string]$file_filter,
         [string]$zip_path,
         [string]$to_dir = $($PWD.path)
     )
@@ -274,25 +504,54 @@ function extract-file {
             $filestream.Close()
         }
     }
+
+    <#
+    .SYNOPSIS
+    Alias: unzipf
+    .Description
+    Extracts files that match filter from .zip archive into a directory.
+    .PARAMETER file_filter
+    Specifies mask to filter file names in the .zip archive.
+    Accepts wildcards "*".
+    Example: -file_filter <*.txt>
+    .PARAMETER zip_path
+    Specifies absolute or relative path to the .zip file.
+    Path will be converted to absolute path and must exist, otherwise throws exception.
+    Example: -zip_path <path/to/file.zip>
+    .PARAMETER to_dir
+    Specifies absolute or relative path to the directory to be compressed.
+    Missing subdirectories will be created.
+    Example: -to_dir <path/to/dir>
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
 #--------------------------------------------------
 function get-files-with-text {
+    [cmdletbinding(DefaultParameterSetName = "plain")]
     param(
-        [Parameter(Position = 0)][ValidateNotNullOrEmpty()][string]$search_string = $(throw "Mandatory parameter not provided: <search_string>."),
+        [Parameter(ParameterSetName = "plain", Position = 0)][ValidateNotNullOrEmpty()][string]$text,
+        [Parameter(ParameterSetName = "regex", Position = 0)][ValidateNotNullOrEmpty()][string]$regex,
         [Parameter(Position = 1)][string]$search_dir = $($pwd.path),
         [Parameter()][string]$file_filter = "*",
-        [Parameter()][switch]$not_recursevly,
-        [Parameter()][switch]$regex,
+        [Parameter()][switch]$not_recursevly,        
         [Parameter()][switch]$open,
-        [Parameter()][string]$out_file
+        [Parameter()][string]$out_file = "list_of_files_with_text.txt"
     )
 
     $ErrorActionPreference = 'Stop'
-    $search_dir = (Resolve-Path $search_dir).Path
+
+    # validate <search_dir> path
+    try { $search_dir = $search_dir | abspath -verify }
+    catch { throw "Failed to validate parameter <search_dir>: $($_.ToString())" }
+
+    # search text/pattern in files
+    if ($PSCmdlet.ParameterSetName -eq "plain") { $search_string = $text }
+    else { $search_string = $regex }
     $file_list = (ls $search_dir -Recurse:$(!$not_recursevly.IsPresent) -Filter $file_filter | `
-        sls -SimpleMatch:$(!$regex.IsPresent) -Pattern $search_string -List).Path
+        sls -SimpleMatch:$($PSCmdlet.ParameterSetName -eq "plain") -Pattern $search_string -List).Path
 
     if ($open) {
         $text_editor = which notepad++ -no_errormessage
@@ -301,13 +560,48 @@ function get-files-with-text {
     }
 
     if ($out_file) {
-        if ($out_file.trim().Length -eq 0) { $out_file = $(Join-Path $pwd.path 'get_files_with_text_output.txt') }
-        if ($out_file -notlike '*.txt') { $out_file += '.txt' }
+        $out_file = $out_file | abspath
+        mkdir (Split-Path $out_file) -Force | Out-Null
         $file_list | Out-File $out_file -Force
     }
     else {
         $file_list
     }
+
+    <#
+    .SYNOPSIS
+    Alias: fwt
+    .Description
+    Searches directory for all the files that contain search string or regex pattern match and prints their paths.
+    Optionally opens found paths in Notepad++ (or Windows notepad if Notepad++ is not available).
+    Optionally dumps results into file instead of displaying in the console.
+    .PARAMETER text
+    Specifies literal search string (no wildcards, not case-sensitive). This is default option.
+    Example: -text 'search string'
+    .PARAMETER regex
+    Specifies search regex pattern. Case-sensitive. Must be specified explicitly.
+    Example: -regex <.*Regex(\sPattern)+.*>
+    .PARAMETER search_dir
+    Specifies absolute or relative path to the search root directory.
+    Path will be converted to absolute path and must exist, otherwise throws exception.
+    Example: -search_dir <path/to/dir>
+    .PARAMETER file_filter
+    Specifies mask to filter file names in the search directory and subdirectories.
+    Accepts wildcards "*".
+    Example: -file_filter <*.txt>
+    .PARAMETER not_recursevly
+    Limits search to only search root directory without subdirectories.
+    Example: -not_recursevly
+    .PARAMETER open
+    Opens found paths in the Notepad++ (or Windows notepad if Notepad++ is not available).
+    Example: -open
+    .PARAMETER out_file
+    Specifies absolute or relative path to the output file where results will be sent instead of the console.
+    Missing subdirectories will be created.
+    Example: -out_file <path/to/file>
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -588,6 +882,8 @@ function list-installed-software {
     }
 
     <#
+    .SYNOPSIS
+    Alias: listis
     .Description
     Lists software records found under following registry keys:
     - HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
@@ -688,7 +984,7 @@ function file-hex-dump {
         % {
             $record = $_
             if (($record -eq 0).count -ne $table_width) {
-                $hex = $record | % { " " + ("{0:x}" -f $_).PadLeft(2, "0") }                    
+                $hex = $record | % { " " + ("{0:x}" -f $_).PadLeft(2, "0") }
                 $char = $record | `
                     % {
                         if ([char]::IsLetterOrDigit($_)) { [char] $_ }
