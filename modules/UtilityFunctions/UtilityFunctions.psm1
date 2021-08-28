@@ -665,14 +665,28 @@ function sha {
 #--------------------------------------------------
 function base64 {
     param(
-        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$text_to_convert,
+        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][Alias("text")][string]$text_to_encrypt,
         [parameter()][switch]$decrypt
     )
 
     process {
-        if ($decrypt) { [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($text_to_convert)) }
-        else { [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($text_to_convert)) }
+        if ($decrypt) { [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($text_to_encrypt)) }
+        else { [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($text_to_encrypt)) }
     }
+
+    <#
+    .Description
+    Encrypts or decrypts text using base64 encryption algorithm.
+    .PARAMETER text_to_encrypt
+    Specifies text to be encrypted. Allows ValueFromPipeline. This is default option.
+    Example 1: base64 -text_to_encrypt "some text"
+    Example 2: "some text" | base64
+    .PARAMETER decrypt
+    Decrypts input object instead of encrypting it.
+    Example: -decrypt
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -685,6 +699,19 @@ function ss-to-plain {
         $plain_text = [Runtime.InteropServices.Marshal]::PtrToStringAuto($pointer)
         return $plain_text
     }
+
+    <#
+    .SYNOPSIS
+    Alias: sstp
+    .Description
+    Converts [SecureString] object into plain text.
+    .PARAMETER s_sting
+    Specifies [SecureString] object to be converted.
+    Example 1: ss-to-plain -s_sting $sstring
+    Example 2: $sstring | ss-to-plain
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -766,27 +793,70 @@ function run-sql() {
     else {
         return $output
     }
+
+    <#
+    .SYNOPSIS
+    Alias: sql
+    .Description
+    Executes SQL query against remote database server and returns response, if any.
+    Uses Windows authentication by default.
+    .PARAMETER server
+    Specifies remote SQL instance to run query against. Uses format <server\instance>.
+    Defaults to local_host\default_instance (".").
+    Example: -server <remote.server.com>\<instance_name>
+    .PARAMETER database
+    Specifies database on SQL instance to run query against.
+    Example: -database <db_name>
+    .PARAMETER credential
+    Specifies PSCredential to use for authentication on SQL instance.
+    Example: -credential <pscredential_object>
+    .PARAMETER user
+    Specifies username to use for authentication on SQL instance.
+    Example: -user <user_name>
+    .PARAMETER passw
+    Specifies password to use for authentication on SQL instance.
+    Example: -passw <password>
+    .PARAMETER use_win_authentication
+    This is default option that is used if neither credential nor username/password specified.
+    No need to use explicitly.
+    .PARAMETER query
+    Specifies SQL query to execute against remote database server.
+    Example: -query "select * from <tab_name>"
+    .PARAMETER timeout
+    Specifies SQL command timeout in seconds.
+    Example: -timeout 10
+    .PARAMETER out_file
+    Specifies absolute or relative path to the output file where results will be sent instead of the console.
+    Missing subdirectories will be created.
+    Example: -out_file <path/to/file>
+    .PARAMETER no_success_message
+    Supresses successful execution status message that is shown by default. The message is useful when query does not expect return data.
+    Example: -no_success_message
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
 #--------------------------------------------------
 function run-process {
     param (
-        [Parameter()][Alias("e")][string]$executable_path = $(throw "Mandatory parameter not provided: <executable_path>."),
+        [Parameter()][Alias("e")][string]$executable = $(throw "Mandatory parameter not provided: <executable>."),
         [Parameter()][Alias("a")][string]$arguments,
         [Parameter()][Alias("w")][string]$working_directory = $PWD.path,
         [Parameter()][Alias("c")][PSCredential]$credential,
+        [Parameter()][Alias("nw")][switch]$create_new_window,
         [Parameter()][Alias("nc")][switch]$no_console_output
     )
 
     $ErrorActionPreference = 'Stop'
 
     # resolve executable path
-    $resolved_exe_path = which $executable_path -no_errormessage
-    if ($resolved_exe_path) { $executable_path = $resolved_exe_path }
+    $resolved_exe_path = which $executable -no_errormessage
+    if ($resolved_exe_path) { $executable = $resolved_exe_path }
     else {
-        try { $executable_path = $executable_path | abspath -verify }
-        catch { throw "Failed to validate parameter <executable_path>: $($_.ToString())" }
+        try { $executable = $executable | abspath -verify }
+        catch { throw "Failed to validate parameter <executable>: $($_.ToString())" }
     }
 
     # resolve working_directory
@@ -795,9 +865,9 @@ function run-process {
 
     # build ProcessStartInfo object
     $ProcessInfo = New-Object System.Diagnostics.ProcessStartInfo
-    $ProcessInfo.FileName = "$executable_path"
+    $ProcessInfo.FileName = "$executable"
     $ProcessInfo.WorkingDirectory = $working_directory
-    $ProcessInfo.CreateNoWindow = $true
+    $ProcessInfo.CreateNoWindow = !$create_new_window.IsPresent
     $ProcessInfo.RedirectStandardError = $true
     $ProcessInfo.RedirectStandardOutput = $true
     $ProcessInfo.UseShellExecute = $false
@@ -815,21 +885,64 @@ function run-process {
     $Process = New-Object System.Diagnostics.Process
     $Process.StartInfo = $ProcessInfo
     $Process.Start() | Out-Null
+    [hashtable]$output = @{}
 
-    if ($no_console_output) { $Process.WaitForExit() }
+    if ($no_console_output) {
+        $Process.WaitForExit()
+        $output.stdout = $Process.StandardOutput.ReadToEnd()
+    }
     else {
         while (!$Process.StandardOutput.EndOfStream) {
-            write-host $Process.StandardOutput.ReadLine()
+            $line = $null
+            $line = $Process.StandardOutput.ReadLine()
+            write-host $line
+            $output.stdout += "$line`n"
         }
     }
 
-    # create output hashtable
-    [hashtable]$output = @{}
-    $output.stdout = $Process.StandardOutput.ReadToEnd()
+    # add standard error stream and exit code
     $output.stderr = $Process.StandardError.ReadToEnd()
     $output.errcode = $Process.ExitCode
 
     return $output
+        [Parameter()][Alias("e")][string]$executable = $(throw "Mandatory parameter not provided: <executable>."),
+        [Parameter()][Alias("a")][string]$arguments,
+        [Parameter()][Alias("w")][string]$working_directory = $PWD.path,
+        [Parameter()][Alias("c")][PSCredential]$credential,
+        [Parameter()][Alias("nw")][switch]$create_new_window,
+        [Parameter()][Alias("nc")][switch]$no_console_output
+    <#
+    .SYNOPSIS
+    Alias: run
+    .Description
+    This is a simple replacement for the PowerShell built-in Start-Process.
+    Runs synchronously (that is current thread is blocked until the child process exits).
+    .PARAMETER executable
+    Specifies executable name or path.
+    Executable must be discoverable from the command line, throws exception otherwise.
+    Example: -executable cmd
+    .PARAMETER arguments
+    Specifies arguments to be passed to the executable as a single string.
+    Example: -arguments "/C first_arg second_arg"
+    .PARAMETER working_directory
+    Specifies directory from where executable should run.
+    Directory path will be converted to absolute path and must exist, otherwise throws exception.
+    Defaults to current directory.
+    Example: -working_directory <path/to/dir>
+    .PARAMETER credential
+    Specifies PSCredential to run executable in the scope of another user.
+    Example: -credential <pscredential_object>
+    .PARAMETER create_new_window
+    Allows executable to run in a new window outside of current console.
+    Example: -create_new_window
+    .PARAMETER no_console_output
+    Disables printing of child process output into the console during execution.
+    By default, run-process emits output of the child process into the console
+    in addition to returning to the parent process as a part of the output object.
+    Example: -no_console_output
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -1051,9 +1164,108 @@ function dir-natural-sort {
 
 
 #--------------------------------------------------
-# function ll {
+function ll {
+    param(
+        [Parameter(Position = 0)][string]$filter = '*',
+        [parameter()][ValidateSet('Name', 'Attrib', 'Size', 'Date')][string]$sort_by = 'Name',
+        [Parameter()][switch]$desc,
+        [Parameter()][int]$spacer_size = 4
+    )
 
-# }
+    $dir_content = @()
+    $sp = " " * $spacer_size
+    switch ($sort_by) {
+        'name' { $sort_attr = 'Name' }
+        'attrib' { $sort_attr = 'Mode' }
+        'size' { $sort_attr = 'Length' }
+        'date' { $sort_attr = 'LastWriteTime' }
+    }
+    $columns_sizes = @{
+        'Name'          = 0;
+        'Size'          = 0;
+        'LastWriteTime' = 0;
+    }
+
+    foreach ($item in (ls -Filter $filter | sort $sort_attr -Descending:$desc.IsPresent )) {
+        $size = $null
+        $unit = $null
+        if ($item.Mode -notlike 'd*') {
+            $size = $item.Length / 1GB
+            $unit = 'GB'
+            if ($size -lt 1) {
+                $size = $item.Length / 1MB
+                $unit = 'MB'
+                if ($size -lt 1) {
+                    $size = $item.Length / 1KB
+                    $unit = 'KB'
+                    if ($size -lt 1) {
+                        $size = $item.Length
+                        $unit = 'bytes'
+                    }
+                }
+            }
+        }
+
+        $item_dict = [ordered]@{}
+        $item_dict.Add('Mode', $item.Mode)
+        $item_dict.Add('Name', $item.Name)
+        if ($size) { $size = [math]::round($size, 2) }
+        $item_dict.Add('Size', "$size $unit")
+        $item_dict.Add('LastWriteTime', $item.LastWriteTime)
+        $dir_content += $item_dict
+
+        if ($columns_sizes.Name -lt $item.Name.Length) { $columns_sizes.Name = $item.Name.Length }
+        if ($columns_sizes.Size -lt "$size $unit".Length) { $columns_sizes.Size = "$size $unit".Length }
+    }
+
+    if ($dir_content.Length -gt 0) {
+        $title = "Attrib" + $sp
+        $title += "Name" + " " * ($columns_sizes.Name + $spacer_size - 4)
+        $title += "Size" + " " * ($columns_sizes.Size + $spacer_size - 4)
+        $title += "Date Modified"
+        if ($title.length -gt $Host.UI.RawUI.WindowSize.Width) { $title = $title.Substring(0, $Host.UI.RawUI.WindowSize.Width) }
+        write "`n$title"
+
+        $div_char = [string][char]9472
+        $divider = $div_char * 6 + $sp
+        $divider += $div_char * 4 + " " * ($columns_sizes.Name + $spacer_size - 4)
+        $divider += $div_char * 4 + " " * ($columns_sizes.Size + $spacer_size - 4)
+        $divider += $div_char * 13
+        if ($divider.length -gt $Host.UI.RawUI.WindowSize.Width) { $divider = $divider.Substring(0, $Host.UI.RawUI.WindowSize.Width) }
+        write $divider
+
+        foreach ($item in $dir_content) {
+            $line = $item.Mode + $sp
+            $line += $item.Name + " " * ($columns_sizes.Name + $spacer_size - $item.Name.Length)
+            $line += $item.Size + " " * ($columns_sizes.Size + $spacer_size - $item.Size.Length)
+            $line += $item.LastWriteTime
+            if ($line.length -gt $Host.UI.RawUI.WindowSize.Width) { $line = $line.Substring(0, $Host.UI.RawUI.WindowSize.Width) }
+            write $line
+        }
+    }
+
+    <#
+    .Description
+    Cosmetic substitute for built-in Get-ChildItem command. Displays directory content in nicely formatted form.
+    Only includes most common collumns. Allows to sort by each column. Does not support recursion.
+    .PARAMETER filter
+    Filters included files and directories. Accepts wildcards '*'.
+    Example: -filter *.ps1
+    .PARAMETER sort_by
+    Specifies the column to sort the result list by. By default sorts in ascending order.
+    Accepted values: 'Name', 'Attrib', 'Size', 'Date' (not case-sensitive).
+    Example: -sort_by size
+    .PARAMETER desc
+    Changes sort order to descending.
+    Example: -desc
+    .PARAMETER spacer_size
+    Specifies number of spaces between columns.
+    Example: -spacer_size 5
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
+}
+
 
 
 #--------------------------------------------------
