@@ -596,7 +596,7 @@ function get-files-with-text {
     Opens found paths in the Notepad++ (or Windows notepad if Notepad++ is not available).
     Example: -open
     .PARAMETER out_file
-    Specifies absolute or relative path to the output file where results will be sent instead of the console.
+    Specifies absolute or relative path to the output file where results will be sent to instead of the console.
     Missing subdirectories will be created.
     Example: -out_file <path/to/file>
     .LINK
@@ -826,7 +826,7 @@ function run-sql() {
     Specifies SQL command timeout in seconds.
     Example: -timeout 10
     .PARAMETER out_file
-    Specifies absolute or relative path to the output file where results will be sent instead of the console.
+    Specifies absolute or relative path to the output file where results will be sent to instead of the console.
     Missing subdirectories will be created.
     Example: -out_file <path/to/file>
     .PARAMETER no_success_message
@@ -1095,6 +1095,24 @@ function file-tabs-to-spaces {
         $converted_content += $line
     }
     Set-Content $out_file -Value $converted_content -Force
+
+    <#
+    .Description
+    Converts tabs into spaces in a file (in-place or into a new file).
+    .PARAMETER file_path
+    Specifies absolute or relative path to the file to be converted.
+    Path will be converted to absolute path and must exist, otherwise throws exception.
+    Example: -file_path <path/to/file>
+    .PARAMETER out_file
+    Specifies absolute or relative path to the file where to send converted content to instead of the original file.
+    Missing subdirectories will be created.
+    Example: -out_file <path/to/file>
+    .PARAMETER tab_size
+    Specifies number of spaces that constitute single tab character.
+    Example: -tab_size 2
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -1137,6 +1155,27 @@ function file-hex-dump {
                 else { "$hex $char" }
             }
         }
+
+    <#
+    .Description
+    Generates HEX table of a file's binary data.
+    .PARAMETER file_path
+    Specifies absolute or relative path to the file to generate HEX table for.
+    Path will be converted to absolute path and must exist, otherwise throws exception.
+    Example: -file_path <path/to/file>
+    .PARAMETER table_width
+    Specifies width of HEX table.
+    Example: -table_width 15
+    .PARAMETER number_of_bytes
+    Specifies amount of bytes to display. Defaults to all (-1).
+    Example: -number_of_bytes 1000
+    .PARAMETER out_file
+    Specifies absolute or relative path to the output file where HEX table will be sent to instead of the console.
+    Missing subdirectories will be created.
+    Example: -out_file <path/to/file>
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
@@ -1160,6 +1199,29 @@ function dir-natural-sort {
     else {
         $output
     }
+
+    <#
+    .SYNOPSIS
+    Alias: listis
+    .Description
+    Generates HEX table of a file's binary data.
+    .PARAMETER file_path
+    Specifies absolute or relative path to the file to generate HEX table for.
+    Path will be converted to absolute path and must exist, otherwise throws exception.
+    Example: -file_path <path/to/file>
+    .PARAMETER table_width
+    Specifies width of HEX table.
+    Example: -table_width 15
+    .PARAMETER number_of_bytes
+    Specifies amount of bytes to display. Defaults to all (-1).
+    Example: -number_of_bytes 1000
+    .PARAMETER out_file
+    Specifies absolute or relative path to the output file where HEX table will be sent to instead of the console.
+    Missing subdirectories will be created.
+    Example: -out_file <path/to/file>
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
 }
 
 
