@@ -536,7 +536,7 @@ function get-files-with-text {
         [Parameter(ParameterSetName = "regex", Position = 0)][ValidateNotNullOrEmpty()][string]$regex,
         [Parameter(Position = 1)][string]$search_dir = $($pwd.path),
         [Parameter()][string]$file_filter = "*",
-        [Parameter()][switch]$not_recursevly,        
+        [Parameter()][switch]$not_recursevly,
         [Parameter()][switch]$open,
         [Parameter()][string]$out_file = "list_of_files_with_text.txt"
     )
@@ -611,10 +611,10 @@ function sha {
     param(
         [Parameter(ParameterSetName = "text", Position = 0, ValueFromPipeline = $true)][AllowEmptyString()]
         [Alias("text")][string]$text_to_hash,
-    
+
         [Parameter(ParameterSetName = "file", Position = 0)][ValidateNotNullOrEmpty()]
         [Alias("file")][string]$file_to_hash,
-        
+
         [parameter()][ValidateSet('1', '256', '384', '512')][string]$algorithm = '256'
     )
 
@@ -633,7 +633,7 @@ function sha {
             $byte_array = [System.IO.File]::ReadAllBytes($file_to_hash)
         }
         else { $byte_array = [System.Text.Encoding]::UTF8.GetBytes($text_to_hash) }
-        
+
         $hash_byte_array = $hasher.ComputeHash($byte_array)
         $hash_byte_array | % { $hash_string += $_.ToString() }
         "$algorithm_prefix $hash_string"
@@ -905,12 +905,7 @@ function run-process {
     $output.errcode = $Process.ExitCode
 
     return $output
-        [Parameter()][Alias("e")][string]$executable = $(throw "Mandatory parameter not provided: <executable>."),
-        [Parameter()][Alias("a")][string]$arguments,
-        [Parameter()][Alias("w")][string]$working_directory = $PWD.path,
-        [Parameter()][Alias("c")][PSCredential]$credential,
-        [Parameter()][Alias("nw")][switch]$create_new_window,
-        [Parameter()][Alias("nc")][switch]$no_console_output
+
     <#
     .SYNOPSIS
     Alias: run
@@ -1180,52 +1175,6 @@ function file-hex-dump {
 
 
 #--------------------------------------------------
-function dir-natural-sort {
-    param (
-        [Parameter(Position = 0)][string]$dir_path = $($PWD.path),
-        [Parameter(Position = 5)][string]$out_file
-    )
-
-    try { $dir_path = $dir_path | abspath -verify }
-    catch { throw "Failed to validate parameter <dir_path>: $($_.ToString())" }
-    $to_natural = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
-    $output = ls | sort $to_natural
-
-    if ($out_file) {
-        $out_file = $out_file | abspath
-        mkdir (Split-Path $out_file) -Force -ErrorAction Stop | Out-Null
-        $output | Out-File $out_file -Force
-    }
-    else {
-        $output
-    }
-
-    <#
-    .SYNOPSIS
-    Alias: listis
-    .Description
-    Generates HEX table of a file's binary data.
-    .PARAMETER file_path
-    Specifies absolute or relative path to the file to generate HEX table for.
-    Path will be converted to absolute path and must exist, otherwise throws exception.
-    Example: -file_path <path/to/file>
-    .PARAMETER table_width
-    Specifies width of HEX table.
-    Example: -table_width 15
-    .PARAMETER number_of_bytes
-    Specifies amount of bytes to display. Defaults to all (-1).
-    Example: -number_of_bytes 1000
-    .PARAMETER out_file
-    Specifies absolute or relative path to the output file where HEX table will be sent to instead of the console.
-    Missing subdirectories will be created.
-    Example: -out_file <path/to/file>
-    .LINK
-    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
-    #>
-}
-
-
-#--------------------------------------------------
 function ll {
     param(
         [Parameter(Position = 0)][string]$filter = '*',
@@ -1248,7 +1197,12 @@ function ll {
         'LastWriteTime' = 0;
     }
 
-    foreach ($item in (ls -Filter $filter | sort $sort_attr -Descending:$desc.IsPresent )) {
+    $to_natural = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) } # natural sort for numbered items
+    if ($sort_attr -eq 'Name') { $ls_output = ls -Filter $filter | sort $to_natural -Descending:$desc.IsPresent }
+    else { ls -Filter $filter | sort $sort_attr -Descending:$desc.IsPresent }
+
+    # foreach ($item in (ls -Filter $filter | sort $sort_attr -Descending:$desc.IsPresent )) {
+    foreach ($item in $ls_output) {
         $size = $null
         $unit = $null
         if ($item.Mode -notlike 'd*') {
