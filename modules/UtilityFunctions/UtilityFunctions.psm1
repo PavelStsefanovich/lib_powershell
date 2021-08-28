@@ -1178,10 +1178,16 @@ function file-hex-dump {
 function ll {
     param(
         [Parameter(Position = 0)][string]$filter = '*',
+        [Parameter()][string]$dir_path = $PWD.path,
         [parameter()][ValidateSet('Name', 'Attrib', 'Size', 'Date')][string]$sort_by = 'Name',
         [Parameter()][switch]$desc,
         [Parameter()][int]$spacer_size = 4
     )
+
+    $ErrorActionPreference = 'Stop'
+    # validate dir_path parameter
+    try { $dir_path = $dir_path | abspath -verify }
+    catch { throw "Failed to validate parameter <dir_path>: $($_.ToString())" }
 
     $dir_content = @()
     $sp = " " * $spacer_size
@@ -1198,8 +1204,8 @@ function ll {
     }
 
     $to_natural = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) } # natural sort for numbered items
-    if ($sort_attr -eq 'Name') { $ls_output = ls -Filter $filter | sort $to_natural -Descending:$desc.IsPresent }
-    else { ls -Filter $filter | sort $sort_attr -Descending:$desc.IsPresent }
+    if ($sort_attr -eq 'Name') { $ls_output = ls $dir_path -Filter $filter | sort $to_natural -Descending:$desc.IsPresent }
+    else { ls $dir_path -Filter $filter | sort $sort_attr -Descending:$desc.IsPresent }
 
     # foreach ($item in (ls -Filter $filter | sort $sort_attr -Descending:$desc.IsPresent )) {
     foreach ($item in $ls_output) {
@@ -1267,6 +1273,11 @@ function ll {
     .PARAMETER filter
     Filters included files and directories. Accepts wildcards '*'.
     Example: -filter *.ps1
+    .PARAMETER dir_path
+    Specifies absolute or relative path to the directory to list.
+    Path will be converted to absolute path and must exist, otherwise throws exception.
+    Defaults to the current directory.
+    Example: -dir_path <path/to/file>
     .PARAMETER sort_by
     Specifies the column to sort the result list by. By default sorts in ascending order.
     Accepted values: 'Name', 'Attrib', 'Size', 'Date' (not case-sensitive).
