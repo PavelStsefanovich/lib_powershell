@@ -19,7 +19,6 @@ https://www.powershellgallery.com/packages/UtilityFunctions
 | ------------- | ------------- | ------------- |
 | abspath |  | Convert path to absolute path |
 | base64 |  | Encrypt/Decrypt text with base64 |
-| dir-natural-sort | dsort | Sort numbered directory content naturally |
 | error |  | Print error message into console |
 | extract-file | unzipf | Extract specific files from .zip archive |
 | file-hex-dump |  | Generate HEX table for a file |
@@ -32,6 +31,7 @@ https://www.powershellgallery.com/packages/UtilityFunctions
 | json-to-hashtable | jth | Convert json into hashtable |
 | list-installed-software | listis | List apps that appear in 'Uninstall Programs' |
 | list-module-commands | listmc | List module commands with aliases |
+| ll |  | Displays directory content in nicely formatted form. |
 | newline | lf | Print newline(s) into console |
 | request-consent | confirm | Ask user for confirmation (y/n) |
 | restart-elevated |  | Restart script as administrator |
