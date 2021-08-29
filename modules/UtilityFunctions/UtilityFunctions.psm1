@@ -900,10 +900,9 @@ function run-process {
         }
     }
 
-    # add standard error stream and exit code
+    # add standard error stream and exit code to the output
     $output.stderr = $Process.StandardError.ReadToEnd()
     $output.errcode = $Process.ExitCode
-
     return $output
 
     <#
