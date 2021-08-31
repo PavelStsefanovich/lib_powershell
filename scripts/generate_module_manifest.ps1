@@ -224,12 +224,13 @@ if (Test-Path $psgallery_api_key_file_path) {
 }
 else {
     info "  ? PowerShell Gallery API Key`: " -no_newline
-    $PSGALLERY_API_KEY = Read-Host -AsSecureString | sstring_to_plain
+    $PSGALLERY_API_KEY = Read-Host -AsSecureString | ss-to-plain
     $PSGALLERY_API_KEY | base64 | Out-File $psgallery_api_key_file_path -Force
 }
 
 info "publishing... " -no_newline
-#TODO uncomment: Publish-Module -Name $MODULE_NAME -NuGetApiKey $PSGALLERY_API_KEY | Out-Null
+Publish-Module -Name $MODULE_NAME -NuGetApiKey $PSGALLERY_API_KEY | Out-Null
 info "done" -success
 
 info "Script finished successfully" -success
+newline
