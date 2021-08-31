@@ -312,6 +312,7 @@ function abspath {
     )
 
     process {
+        $path = $path -replace '^~[\\\/]', "$HOME\"
         if ([System.IO.Path]::IsPathRooted($path)) { $abspath = $path}
         else { $abspath = (Join-Path ($parent | abspath) $path) }
         if ($verify) { $abspath = (Resolve-Path $abspath -ErrorAction Stop).Path }
