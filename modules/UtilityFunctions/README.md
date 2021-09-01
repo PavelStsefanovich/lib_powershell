@@ -37,7 +37,7 @@ https://www.powershellgallery.com/packages/UtilityFunctions
 | restart-elevated |  | Restart script as administrator |
 | run-process | run | Run external process and return standard streams & exit code |
 | run-sql | sql | Execute SQL query and return result |
-| sha |  | Encrypt text with SHA- algorithms  |
+| sha |  | Generate hash usin SHA- algorithms |
 | ss-to-plain | sstp | Convert SecureString into plain text |
 | unzip |  | Extract .zip archive into directory |
 | wait-any-key | wait | Wait for user to press any key |
