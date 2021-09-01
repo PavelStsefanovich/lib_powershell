@@ -57,7 +57,7 @@ function verify-public-url {
 
 #--------------------------------------------------
 function bump_version {
-    param ([Parameter()][string] $version_segment_string)  
+    param ([Parameter()][string] $version_segment_string)
     return [string](([int]$version_segment_string) += 1)
 }
 
@@ -183,7 +183,7 @@ if (! $skip_manifest_update) {
         $copyright_string = $copyright.groups[2].Value
         $copyright_date = $copyright.groups[3].Value
         $copyright_date_updated = Get-Date -UFormat %Y
-        $manifest.Copyright = $copyright_string.replace($copyright_date, $copyright_date_updated)   
+        $manifest.Copyright = $copyright_string.replace($copyright_date, $copyright_date_updated)
 
         # updating release notes
         foreach ($item in $user_update_strings) {
@@ -229,7 +229,14 @@ else {
 }
 
 info "publishing... " -no_newline
-Publish-Module -Name $MODULE_NAME -NuGetApiKey $PSGALLERY_API_KEY | Out-Null
+try { Publish-Module -Path $MODULE_PATH -NuGetApiKey $PSGALLERY_API_KEY | Out-Null }
+catch {
+    $err = $_
+    if ($err.Exception -like '*The specified API key is invalid*') {
+        rm $psgallery_api_key_file_path -Force -ErrorAction SilentlyContinue
+    }
+    throw $err.Exception
+}
 info "done" -success
 
 info "Script finished successfully" -success
