@@ -13,7 +13,6 @@ if (Test-Path($ChocolateyProfile)) {
 function prompt {
     $current_location = $pwd.Path
     (Get-Host).UI.RawUI.WindowTitle = ((Get-Host).UI.RawUI.WindowTitle).replace('<path>', $current_location)
-    #$prompt = "`n$current_location>`n> "
     $prompt = "`n$(split-path $current_location -leaf)/> "
     $prompt
 }
@@ -71,4 +70,4 @@ if ($pwd.Path -in $default_locations) {
 }
 
 # FOOTER
-(([string][char]9552))*120
+(([string][char]9552))*($Host.UI.RawUI.WindowSize.Width)
