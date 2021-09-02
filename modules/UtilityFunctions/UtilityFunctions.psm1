@@ -1205,7 +1205,7 @@ function ll {
 
     $to_natural = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) } # natural sort for numbered items
     if ($sort_attr -eq 'Name') { $ls_output = ls $dir_path -Filter $filter | sort $to_natural -Descending:$desc.IsPresent }
-    else { ls $dir_path -Filter $filter | sort $sort_attr -Descending:$desc.IsPresent }
+    else { $ls_output = ls $dir_path -Filter $filter | sort $sort_attr -Descending:$desc.IsPresent }
 
     # foreach ($item in (ls -Filter $filter | sort $sort_attr -Descending:$desc.IsPresent )) {
     foreach ($item in $ls_output) {
