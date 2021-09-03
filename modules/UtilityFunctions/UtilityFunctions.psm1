@@ -1177,9 +1177,9 @@ function file-hex-dump {
 #--------------------------------------------------
 function ll {
     param(
-        [Parameter(Position = 0)][string]$filter = '*',
-        [Parameter()][string]$dir_path = $PWD.path,
-        [parameter()][ValidateSet('Name', 'Attrib', 'Size', 'Date')][string]$sort_by = 'Name',
+        [Parameter(Position = 0)][string]$dir_path = $PWD.path,
+        [Parameter()][string]$filter = '*',
+        [parameter()][ValidateSet('Name', 'Size', 'Date')][string]$sort_by = 'Name',
         [Parameter()][switch]$desc,
         [Parameter()][int]$spacer_size = 4
     )
@@ -1193,7 +1193,6 @@ function ll {
     $sp = " " * $spacer_size
     switch ($sort_by) {
         'name' { $sort_attr = 'Name' }
-        'attrib' { $sort_attr = 'Mode' }
         'size' { $sort_attr = 'Length' }
         'date' { $sort_attr = 'LastWriteTime' }
     }
@@ -1203,12 +1202,30 @@ function ll {
         'LastWriteTime' = 0;
     }
 
-    $to_natural = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) } # natural sort for numbered items
-    if ($sort_attr -eq 'Name') { $ls_output = ls $dir_path -Filter $filter | sort $to_natural -Descending:$desc.IsPresent }
-    else { $ls_output = ls $dir_path -Filter $filter | sort $sort_attr -Descending:$desc.IsPresent }
+    # natural sort for numbered items
+    $to_natural = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 
-    # foreach ($item in (ls -Filter $filter | sort $sort_attr -Descending:$desc.IsPresent )) {
+    # sort by Date
+    if ($sort_attr -eq 'LastWriteTime') { $ls_output = ls $dir_path -Filter $filter | sort $sort_attr -Descending:$(!$desc.IsPresent) }
+    else {
+        # if $sort_by == 'Size', sort directories by name instead, because they all have Size == 0
+        $sort_attr_dir = $sort_attr
+        if ($sort_attr_dir -eq 'Length') { $sort_attr_dir = 'Name' }
+
+        # sort directories
+        if ($sort_attr_dir -eq 'Name') { $ls_output_dirs = ls $dir_path -Filter $filter -Directory | sort $to_natural -Descending:$desc.IsPresent }
+
+        # files
+        if ($sort_attr -eq 'Name') { $ls_output_files = ls $dir_path -Filter $filter -File | sort $to_natural -Descending:$desc.IsPresent }
+        if ($sort_attr -eq 'Length') { $ls_output_files = ls $dir_path -Filter $filter -File | sort $sort_attr -Descending:$desc.IsPresent }
+
+        # concatenate all with directories first
+        $ls_output = $ls_output_dirs + $ls_output_files   
+    }
+
     foreach ($item in $ls_output) {
+
+        # make Size pretty
         $size = $null
         $unit = $null
         if ($item.Mode -notlike 'd*') {
@@ -1228,12 +1245,18 @@ function ll {
             }
         }
 
+        # make Date pretty
+        $timespan = (Get-Date -Hour 0 -Minute 0 -Second 0) - (Get-Date ($item.LastWriteTime))
+        if ($timespan.TotalDays -le 0) { $datetime = "Today at " + (Get-Date $item.LastWriteTime -Format "HH:mm:ss") }
+        elseif ($timespan.TotalDays -gt 0 -and $timespan.TotalDays -lt 1) { $datetime = "Yesterday at " + (Get-Date $item.LastWriteTime -Format "HH:mm:ss") }
+        else { $datetime = Get-Date $item.LastWriteTime -Format "ddd, MMM dd, yyyy; HH:mm:ss" }
+
         $item_dict = [ordered]@{}
         $item_dict.Add('Mode', $item.Mode)
         $item_dict.Add('Name', $item.Name)
         if ($size) { $size = [math]::round($size, 2) }
         $item_dict.Add('Size', "$size $unit")
-        $item_dict.Add('LastWriteTime', $item.LastWriteTime)
+        $item_dict.Add('LastWriteTime', $datetime)
         $dir_content += $item_dict
 
         if ($columns_sizes.Name -lt $item.Name.Length) { $columns_sizes.Name = $item.Name.Length }
