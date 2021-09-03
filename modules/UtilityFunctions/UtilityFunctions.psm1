@@ -1293,14 +1293,14 @@ function ll {
     .Description
     Cosmetic substitute for built-in Get-ChildItem command. Displays directory content in nicely formatted form.
     Only includes most common collumns. Allows to sort by each column. Does not support recursion.
-    .PARAMETER filter
-    Filters included files and directories. Accepts wildcards '*'.
-    Example: -filter *.ps1
     .PARAMETER dir_path
     Specifies absolute or relative path to the directory to list.
     Path will be converted to absolute path and must exist, otherwise throws exception.
     Defaults to the current directory.
     Example: -dir_path <path/to/file>
+    .PARAMETER filter
+    Filters included files and directories. Accepts wildcards '*'.
+    Example: -filter *.ps1
     .PARAMETER sort_by
     Specifies the column to sort the result list by. By default sorts in ascending order.
     Accepted values: 'Name', 'Attrib', 'Size', 'Date' (not case-sensitive).
