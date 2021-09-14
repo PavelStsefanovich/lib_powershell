@@ -539,7 +539,7 @@ function get-files-with-text {
         [Parameter()][string]$file_filter = "*",
         [Parameter()][switch]$not_recursevly,
         [Parameter()][switch]$open,
-        [Parameter()][string]$out_file = "list_of_files_with_text.txt"
+        [Parameter()][string]$out_file
     )
 
     $ErrorActionPreference = 'Stop'
