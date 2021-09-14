@@ -10,6 +10,9 @@ or force-install:
     Install-Module -Name UtilityFunctions -Force -AllowClobber
 	Import-Module UtilityFunctions -Force -DisableNameChecking
 
+### Upgrade
+    Remove-Module UtilityFunctions -force -ea SilentlyContinue; Uninstall-Module UtilityFunctions -a -force -ea Stop; Install-Module -n UtilityFunctions -force -a -ea Stop; Import-Module UtilityFunctions -force -d -ea Stop
+
 ### Powershell Gallery
 https://www.powershellgallery.com/packages/UtilityFunctions
 
