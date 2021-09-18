@@ -1320,6 +1320,35 @@ function ll {
 }
 
 
+#--------------------------------------------------
+function unblock-downloaded {
+    param (
+        [Parameter(Position = 0)][string]$dir_path,
+        [Parameter(Position = 1)][switch]$recurse
+    )
+
+    if ($dir_path) { $dir_path = $dir_path | abspath -verify }
+    else { $dir_path = '~\Downloads' | abspath -verify }
+    ls $dir_path -File -Recurse:$recurse | Unblock-File
+
+    <#
+    .SYNOPSIS
+    Alias: unb
+    .Description
+    Unblocks files in the "$HOME\Downloads" directory (and optionally in it's children).
+    Optionally unblocks in the specified directory (and optionally in it's children).
+    .PARAMETER dir_path
+    If specified, unblocks files in the target directory instead of default "$HOME\Downloads".
+    Example: -dir_path <some/dir>
+    .PARAMETER recurse
+    If specified, includes target directory children recursivly.
+    Example: -recurse
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
+}
+
+
 
 #--------------------------------------------------
 Set-Alias -Name lf -Value newline -Force
@@ -1336,5 +1365,6 @@ Set-Alias -Name run -Value run-process -Force
 Set-Alias -Name unzipf -Value extract-file -Force
 Set-Alias -Name listis -Value list-installed-software -Force
 Set-Alias -Name dsort -Value dir-natural-sort -Force
+Set-Alias -Name unb -Value unblock-downloaded -Force
 
 Export-ModuleMember -Function * -Alias *

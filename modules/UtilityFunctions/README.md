@@ -11,7 +11,7 @@ or force-install:
 	Import-Module UtilityFunctions -Force -DisableNameChecking
 
 ### Upgrade
-    Remove-Module UtilityFunctions -force -ea SilentlyContinue; Uninstall-Module UtilityFunctions -a -force -ea Stop; Install-Module -n UtilityFunctions -force -a -ea Stop; Import-Module UtilityFunctions -force -d -ea Stop
+    Remove-Module UtilityFunctions -force -ea SilentlyContinue; Uninstall-Module UtilityFunctions -allv -force -ea SilentlyContinue; Install-Module -n UtilityFunctions -force -allowc -ea Stop; Import-Module UtilityFunctions -force -d -ea Stop
 
 ### Powershell Gallery
 https://www.powershellgallery.com/packages/UtilityFunctions
@@ -42,6 +42,7 @@ https://www.powershellgallery.com/packages/UtilityFunctions
 | run-sql | sql | Execute SQL query and return result |
 | sha |  | Generate hash usin SHA- algorithms |
 | ss-to-plain | sstp | Convert SecureString into plain text |
+| unblock-downloaded | unb | Unblock downloaded files |
 | unzip |  | Extract .zip archive into directory |
 | wait-any-key | wait | Wait for user to press any key |
 | warning |  | Print warning message into console |
