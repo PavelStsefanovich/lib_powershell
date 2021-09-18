@@ -373,7 +373,9 @@ function list-module-commands {
         [Parameter()][switch]$as_hashtable
     )
 
-    if (!(Get-Module $module_name)) { throw "Module not found: `"$module_name`""}
+    $module_name = (Get-Module utilityfunctions).Name
+    if (!$module_name) { throw "Module not found: `"$module_name`""}
+    $module_version = (Get-Module $module_name).Version.ToString()
     $commands_map = @{}
     $max_length = 0
 
@@ -384,6 +386,7 @@ function list-module-commands {
         }
 
     if ($as_hashtable) { return $commands_map }
+    write "$module_name (v$module_version):"
     $commands_map.keys | sort | %{
         $line = " $_"
         if ($commands_map.$_) { $line += " "*(($max_length + 5) - $_.length) + "--> $($commands_map.$_)" }
