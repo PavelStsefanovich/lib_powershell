@@ -386,7 +386,7 @@ function list-module-commands {
         }
 
     if ($as_hashtable) { return $commands_map }
-    write "$module_name (v$module_version):"
+    write "$module_name v$module_version:"
     $commands_map.keys | sort | %{
         $line = " $_"
         if ($commands_map.$_) { $line += " "*(($max_length + 5) - $_.length) + "--> $($commands_map.$_)" }
