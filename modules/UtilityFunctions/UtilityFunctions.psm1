@@ -312,7 +312,7 @@ function abspath {
     )
 
     process {
-        $path = $path -replace '^~[\\\/]', "$HOME\"
+        $path = $path -replace '^~', "$HOME\"
         if ([System.IO.Path]::IsPathRooted($path)) { $abspath = $path}
         else { $abspath = (Join-Path ($parent | abspath) $path) }
         if ($verify) { $abspath = (Resolve-Path $abspath -ErrorAction Stop).Path }
@@ -1181,6 +1181,7 @@ function ll {
         [Parameter()][string]$filter = '*',
         [parameter()][ValidateSet('Name', 'Size', 'Date')][string]$sort_by = 'Name',
         [Parameter()][switch]$desc,
+        [Parameter()][switch]$file,
         [Parameter()][int]$spacer_size = 4
     )
 
@@ -1206,14 +1207,16 @@ function ll {
     $to_natural = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 
     # sort by Date
-    if ($sort_attr -eq 'LastWriteTime') { $ls_output = ls $dir_path -Filter $filter | sort $sort_attr -Descending:$(!$desc.IsPresent) }
+    if ($sort_attr -eq 'LastWriteTime') { $ls_output = ls $dir_path -Filter $filter -File:$file | sort $sort_attr -Descending:$(!$desc.IsPresent) }
     else {
-        # if $sort_by == 'Size', sort directories by name instead, because they all have Size == 0
-        $sort_attr_dir = $sort_attr
-        if ($sort_attr_dir -eq 'Length') { $sort_attr_dir = 'Name' }
+        if (!$file) {
+            # if $sort_by == 'Size', sort directories by name instead, because they all have Size == 0
+            $sort_attr_dir = $sort_attr
+            if ($sort_attr_dir -eq 'Length') { $sort_attr_dir = 'Name' }
 
-        # sort directories
-        if ($sort_attr_dir -eq 'Name') { $ls_output_dirs = ls $dir_path -Filter $filter -Directory | sort $to_natural -Descending:$desc.IsPresent }
+            # sort directories
+            if ($sort_attr_dir -eq 'Name') { $ls_output_dirs = ls $dir_path -Filter $filter -Directory | sort $to_natural -Descending:$desc.IsPresent }
+        }
 
         # files
         if ($sort_attr -eq 'Name') { $ls_output_files = ls $dir_path -Filter $filter -File | sort $to_natural -Descending:$desc.IsPresent }
