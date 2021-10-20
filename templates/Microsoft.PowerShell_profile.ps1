@@ -1,4 +1,4 @@
-# Chocolatey profile
+﻿# Chocolatey profile
 $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
 if (Test-Path($ChocolateyProfile)) {
     Import-Module "$ChocolateyProfile"
@@ -12,7 +12,7 @@ if (Test-Path($ChocolateyProfile)) {
 # FUNCTIONS
 function prompt {
     $current_location = $pwd.Path
-    (Get-Host).UI.RawUI.WindowTitle = ((Get-Host).UI.RawUI.WindowTitle).replace('<path>', $current_location)
+    (Get-Host).UI.RawUI.WindowTitle = $title.replace('<path>', $current_location)
     $prompt = "`n$(split-path $current_location -leaf)/> "
     $prompt
 }
