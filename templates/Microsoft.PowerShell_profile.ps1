@@ -1,4 +1,4 @@
-﻿# Chocolatey profile
+# Chocolatey profile
 $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
 if (Test-Path($ChocolateyProfile)) {
     Import-Module "$ChocolateyProfile"
@@ -31,7 +31,7 @@ $default_locations = @(
     'C:\Windows\System32\WindowsPowerShell\v1.0',
     'C:\Program Files\PowerShell\7',
     $HOME)
-$working_directory = 'E:\GoogleDrive\stse.pavell\UsefullScripts'
+$working_directory = 'E:\WORKSHOP'
 
 
 # TITLE
@@ -56,6 +56,19 @@ $amap = @{
     'npp' = (Get-Alias npp).Definition
 }
 $amap.keys | sort | %{ write (" $_" + " "*(25 - $_.length) + "--> $($amap.$_)")}
+
+
+# SET MOUNTS
+New-PSDrive -Name us -Root "E:\GoogleDrive\stse.pavell\UsefullScripts" -PSProvider FileSystem | out-null
+
+
+# PRINT MOUNTS
+write "`nMOUNTS:"
+$mmap = @{
+    'us' = (Get-PSDrive -Name us).Root
+}
+$mmap.keys | sort | %{ write (" $_`:" + " "*(25 - $_.length) + "--> $($mmap.$_)")}
+
 
 if (Get-Module UtilityFunctions) {
     write "`nUTILITY FUNCTIONS:"
