@@ -422,6 +422,7 @@ function zip {
 
     try { $from_dir = $from_dir | abspath -verify }
     catch { throw "Failed to validate parameter <from_dir>: $($_.ToString())" }
+    if (!$zip_path) { $zip_path = (Split-Path $from_dir -Leaf) + ".zip" }
     $zip_path = $zip_path | abspath
     mkdir (Split-Path $zip_path) -Force -ErrorAction stop | Out-Null
     Add-Type -AssemblyName "system.io.compression.filesystem"
