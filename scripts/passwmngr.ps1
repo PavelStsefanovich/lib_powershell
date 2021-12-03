@@ -8,7 +8,6 @@ $VAULT_FILE_PATH = "$HOME\.psvlt"   # Change to backed up location
 
 
 
-
 ##########  FUNCTIONS  ##########################################
 
 #--------------------------------------------------
@@ -87,28 +86,43 @@ function decrypt-vault {
 
     for ($i = 0; $i -lt $encrypted_vault.Count; $i++) {
         $decrypted_entry = decrypt $encrypted_vault[$i] $passphrase
-        if (!$decrypted_entry) { return $null }
 
         try {
+            if (!$decrypted_entry) {
+                if ($i -eq 0) { return $null }
+                throw "decryption operation failed"
+            }
+
             $decrypted_hashtable = $decrypted_entry | json-to-hashtable
 
             if ($i -eq 0) {
-                if (!$decrypted_hashtable.config.columns) { throw "Corrupted vault" }
+                if (!$decrypted_hashtable.config.columns) { throw "Vault file appears to be corrupted" }
                 $decrypted_vault += $decrypted_hashtable
             }
             else { $decrypted_vault.secrets += $decrypted_hashtable }
         }
         catch {
             if ($i -eq 0) {
-                error "Vault file appears to be corrupted"
+                error $_.ToString()
                 newline
                 info "Press any key to exit"
                 wait-any-key
                 exit 1
             }
 
-            warning "failed to decrypt a secret"
+            warning $_.ToString() -no_prefix
+            $failed_entries = $true
         }
+    }
+
+    if ($failed_entries) {
+        newline
+        warning "One or more secret entries appear to be corrupted and were not recovered"
+        info "To delete corrupted entries and continue, press 'C'"
+        info "To exit and keep vault the way it is, press any key"
+        wait-any-key
+        $userin = $Host.UI.RawUI.ReadKey("AllowCtrlC,IncludeKeyUp,NoEcho").Character
+        if (([string]$userin).ToLower() -ne 'c') { exit 0 }
     }
 
     return $decrypted_vault
