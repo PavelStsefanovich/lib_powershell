@@ -4,6 +4,10 @@ param (
 )
 
 
+$VAULT_FILE_PATH = "$HOME\.psvlt"   # Change to backed up location
+
+
+
 
 ##########  FUNCTIONS  ##########################################
 
@@ -485,13 +489,12 @@ $host.PrivateData.ErrorBackgroundColor = $host.UI.RawUI.BackgroundColor
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
 $SCRIPT_NAME = $MyInvocation.MyCommand.Name
 $SCRIPT_FULLPATH = $PSCommandPath
-$VAULT_FILE_PATH = "$HOME\.psvlt"                   # (!) Change to backed up location
 
 
 #--------------------------------------------------
 # DEPENDENCIES
 if (!$child_window) {
-    try { Import-Module UtilityFunctions -DisableNameChecking -Force -ErrorAction Stop}
+    try { Import-Module UtilityFunctions -MinimumVersion '0.3.0' -DisableNameChecking -Force -ErrorAction Stop }
     catch {
         write-host " "
         $warning  = "Dependency module not found: UtilityFunctions v.0.3.0`n"
