@@ -6,7 +6,9 @@ if (Test-Path($ChocolateyProfile)) {
 
 
 # ENVIRONMENT VARIABLES
-# $env:PSModulePath = $env:PSModulePath.TrimEnd(';') + ';' + <additional_module_path>
+# $env:PSModulePath = $env:PSModulePath.TrimEnd(';') + ';<additional_module_path>'
+# $env:Path = $env:Path.trim(';') + ';<some_path>'
+
 
 
 # FUNCTIONS
@@ -56,18 +58,6 @@ $amap = @{
     'npp' = (Get-Alias npp).Definition
 }
 $amap.keys | sort | %{ write (" $_" + " "*(25 - $_.length) + "--> $($amap.$_)")}
-
-
-# SET MOUNTS
-New-PSDrive -Name us -Root "E:\GoogleDrive\stse.pavell\UsefullScripts" -PSProvider FileSystem | out-null
-
-
-# PRINT MOUNTS
-write "`nMOUNTS:"
-$mmap = @{
-    'us' = (Get-PSDrive -Name us).Root
-}
-$mmap.keys | sort | %{ write (" $_`:" + " "*(25 - $_.length) + "--> $($mmap.$_)")}
 
 
 if (Get-Module UtilityFunctions) {
