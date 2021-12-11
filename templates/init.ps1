@@ -31,8 +31,9 @@ $PSDefaultParameterValues['*:Encoding'] = 'utf8'
 $SCRIPT_DIR = $PSScriptRoot
 $SCRIPT_NAME = $MyInvocation.MyCommand.Name
 $WORKSPACE = $PWD.Path
-$IS_VERBOSE = $PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent
-if (!$IS_VERBOSE) { $IS_VERBOSE = $false }
+$IS_VERBOSE = [bool]($PSCmdlet.MyInvocation.BoundParameters.Verbose)
+$IS_INTERACTIVE = $cmd = (Get-CimInstance win32_process -Filter "ProcessID=$PID" | `
+    ? { $_.processname -eq "powershell.exe" }).CommandLine -like  "*-NonI*"
 
 
 #--------------------------------------------------
