@@ -1,4 +1,4 @@
-$PSDefaultParameterValues['*:Encoding'] = 'ascii'
+$PSDefaultParameterValues['*:Encoding'] = 'utf8'
 $message_padding = "  "
 
 
