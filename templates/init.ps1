@@ -32,8 +32,8 @@ $SCRIPT_DIR = $PSScriptRoot
 $SCRIPT_NAME = $MyInvocation.MyCommand.Name
 $WORKSPACE = $PWD.Path
 $IS_VERBOSE = [bool]($PSCmdlet.MyInvocation.BoundParameters.Verbose)
-$IS_INTERACTIVE = $cmd = (Get-CimInstance win32_process -Filter "ProcessID=$PID" | `
-    ? { $_.processname -eq "powershell.exe" }).CommandLine -like  "*-NonI*"
+$IS_INTERACTIVE = (Get-CimInstance win32_process -Filter "ProcessID=$PID" | `
+        ? { $_.processname -eq "powershell.exe" }).CommandLine -notlike "*-NonI*"
 
 
 #--------------------------------------------------
