@@ -19,7 +19,8 @@ $dotNetReleases = @{
     "4.6.2"	= 394802;
     "4.7"   = 460798;
     "4.7.1"	= 461308;
-    "4.7.2"	= 461808
+    "4.7.2"	= 461808;
+    "4.8"   = 528040
 }
 $dotNetVersions = ($dotNetReleases.GetEnumerator() | sort -Property value).name
 
