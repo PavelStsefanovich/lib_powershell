@@ -229,7 +229,7 @@ else {
 }
 
 info "publishing... " -no_newline
-try { Publish-Module -Path $MODULE_PATH -NuGetApiKey $PSGALLERY_API_KEY | Out-Null }
+try { Publish-Module -Path $MODULE_PATH -NuGetApiKey $PSGALLERY_API_KEY -ErrorAction stop }
 catch {
     $err = $_
     if ($err.Exception -like '*The specified API key is invalid*') {
