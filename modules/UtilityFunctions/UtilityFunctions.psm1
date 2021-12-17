@@ -5,6 +5,7 @@ $message_padding = "  "
 #--------------------------------------------------
 function newline {
     param([int]$count = 1)
+
     1..$count | % { Write-Host "`n" }
 
     <#
@@ -24,6 +25,7 @@ function newline {
 #--------------------------------------------------
 function error {
     param([string]$message)
+
     Write-Host ($message_padding + "ERROR: $message`n") -ForegroundColor Red
 
     <#
@@ -42,13 +44,16 @@ function error {
 function info {
     param(
         [string]$message,
-        [switch]$no_newline,
-        [switch]$success
+        [switch]$nonewline,
+        [switch]$success,
+        [switch]$sub
     )
 
     $color = 'Gray'
     if ($success) { $color = 'Green' }
-    Write-Host ($message_padding + $message) -ForegroundColor $color -NoNewline:$no_newline
+    if ($sub) { $color = 'DarkGray' }
+
+    Write-Host ($message_padding + $message) -ForegroundColor $color -NoNewline:$nonewline
 
     <#
     .Description
@@ -56,12 +61,15 @@ function info {
     .PARAMETER message
     Message to display.
     Example: -message "Some info."
-    .PARAMETER no_newline
+    .PARAMETER nonewline
     Omits trailing newline, so the next console output will be printed to the same line.
-    Example: -no_newline
+    Example: -nonewline
     .PARAMETER success
     Colors message text green.
     Example: -success
+    .PARAMETER sub
+    Colors message text dark gray.
+    Example: -sub
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
     #>
@@ -72,12 +80,12 @@ function info {
 function warning {
     param(
         [string]$message,
-        [switch]$no_newline,
-        [switch]$no_prefix
+        [switch]$nonewline,
+        [switch]$noprefix
     )
 
-    if ($no_prefix) { Write-Host ($message_padding + $message) -ForegroundColor Yellow -NoNewline:$no_newline }
-    else { Write-Host ($message_padding + "WARNING: $message") -ForegroundColor Yellow -NoNewline:$no_newline }
+    if ($noprefix) { Write-Host ($message_padding + $message) -ForegroundColor Yellow -NoNewline:$nonewline }
+    else { Write-Host ($message_padding + "WARNING: $message") -ForegroundColor Yellow -NoNewline:$nonewline }
 
     <#
     .Description
@@ -86,12 +94,12 @@ function warning {
     .PARAMETER message
     Message to display.
     Example: -message "Note something!"
-    .PARAMETER no_newline
+    .PARAMETER nonewline
     Omits trailing newline, so the next console output will be printed to the same line.
-    Example: -no_newline
-    .PARAMETER no_prefix
+    Example: -nonewline
+    .PARAMETER noprefix
     Omits 'WARNING:' prefix.
-    Example: -no_prefix
+    Example: -noprefix
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
     #>
@@ -103,7 +111,7 @@ function request-consent {
     param([string]$question)
 
     do {
-        warning (" (?) $question ( y/n ): ") -no_prefix
+        warning (" (?) $question ( y/n ): ") -noprefix
         $key = [System.Console]::ReadKey("NoEcho").key
         if ($key -notin 'Y', 'N') { error "It's a yes/no question." }
     }
@@ -164,9 +172,9 @@ function isadmin {
 #--------------------------------------------------
 function restart-elevated {
     param(
-        $script_args,
+        $arguments,
         [switch]$kill_original,
-        [string]$working_directory = $PWD.path
+        [string]$workdir = $PWD.path
     )
 
     if ($MyInvocation.ScriptName -eq "") { throw 'Script must be saved as a .ps1 file.' }
@@ -175,10 +183,10 @@ function restart-elevated {
     try {
         $script_fullpath = $MyInvocation.ScriptName
         $argline = "-noprofile -nologo -noexit"
-        $argline += " -Command cd `"$working_directory`"; `"$script_fullpath`""
+        $argline += " -Command cd `"$workdir`"; `"$script_fullpath`""
 
-        if ($script_args) {
-            $script_args.GetEnumerator() | % {
+        if ($arguments) {
+            $arguments.GetEnumerator() | % {
                 if ($_.Value -is [boolean]) { $argline += " -$($_.key) `$$($_.value)" }
                 elseif ($_.Value -is [switch]) { $argline += " -$($_.key)" }
                 else { $argline += " -$($_.key) `"$($_.value)`"" }
@@ -199,15 +207,15 @@ function restart-elevated {
     .Description
     Restarts current script as administrator. Allows to pass current arguments.
     Optionally kills original (non-admin) script/console.
-    .PARAMETER script_args
+    .PARAMETER arguments
     Arguments to be passed to the elevated script.
-    Example: -script_args $PSBoundParameters
+    Example: -arguments $PSBoundParameters
     .PARAMETER kill_original
     Kills original (non-admin) script/console when elevated script has started.
     Example: -kill_original
-    .PARAMETER working_directory
+    .PARAMETER workdir
     Specifies directory where elevated script should be started. Defaults to current directory.
-    Example: -working_directory <some/path>
+    Example: -workdir <some/path>
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
     #>
@@ -343,23 +351,18 @@ function abspath {
 #--------------------------------------------------
 function which {
     param(
-        [string]$executable,
-        [switch]$no_errormessage
+        [string]$executable
     )
 
-    if ($no_errormessage) { (gcm $executable -ErrorAction SilentlyContinue).Source }
-    else { (gcm $executable -ErrorAction Stop).Source }
+    (gcm $executable -ErrorAction SilentlyContinue).Source
 
     <#
     .Description
-    Returns executable's source path if it's discoverable from the command line, throws exception otherwise.
-    Optionally returns Null instead of throwing exception.
+    Returns executable's source path if it's discoverable from the command line.
+    Otherwise, returns Null.
     .PARAMETER executable
     Specifies executable name (<base_name> or <base_name>.exe) to lookup.
     Example: -executable <executable_name>
-    .PARAMETER no_errormessage
-    Returns Null instead of throwing exception in case executable source path cannot be resolved.
-    Example: -no_errormessage
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
     #>
@@ -414,32 +417,32 @@ function list-module-commands {
 #--------------------------------------------------
 function zip {
     param(
-        [string]$from_dir,
-        [string]$zip_path,
+        [string]$fromdir,
+        [string]$zippath,
         [parameter()][ValidateSet('Optimal','Fastest','NoCompression')][string]$compression = 'Optimal',
         [switch]$include_basedir
     )
 
-    try { $from_dir = $from_dir | abspath -verify }
-    catch { throw "Failed to validate parameter <from_dir>: $($_.ToString())" }
-    if (!$zip_path) { $zip_path = (Split-Path $from_dir -Leaf) + ".zip" }
-    $zip_path = $zip_path | abspath
-    mkdir (Split-Path $zip_path) -Force -ErrorAction stop | Out-Null
+    try { $fromdir = $fromdir | abspath -verify }
+    catch { throw "Failed to validate parameter <fromdir>: $($_.ToString())" }
+    if (!$zippath) { $zippath = (Split-Path $fromdir -Leaf) + ".zip" }
+    $zippath = $zippath | abspath
+    mkdir (Split-Path $zippath) -Force -ErrorAction stop | Out-Null
     Add-Type -AssemblyName "system.io.compression.filesystem"
-    [io.compression.zipfile]::CreateFromDirectory($from_dir, $zip_path, $compression, $include_basedir.IsPresent)
+    [io.compression.zipfile]::CreateFromDirectory($fromdir, $zippath, $compression, $include_basedir.IsPresent)
 
     <#
     .Description
     Compresses a directory into .zip archive.
     Optionally includes target directory as a root directory in the archive.
-    .PARAMETER from_dir
+    .PARAMETER fromdir
     Specifies absolute or relative path to the directory to be compressed.
     Path will be converted to absolute path and must exist, otherwise throws exception.
-    Example: -from_dir <path/to/dir>
-    .PARAMETER zip_path
+    Example: -fromdir <path/to/dir>
+    .PARAMETER zippath
     Specifies absolute or relative path to the output .zip file.
     Missing subdirectories will be created.
-    Example: -zip_path <path/to/file.zip>
+    Example: -zippath <path/to/file.zip>
     .PARAMETER compression
     Specifies compression level. Accepted values: 'Optimal', 'Fastest, 'NoCompression'.
     Defaults to 'Optimal'
@@ -456,28 +459,28 @@ function zip {
 #--------------------------------------------------
 function unzip {
     param(
-        [string]$zip_path,
-        [string]$to_dir
+        [string]$zippath,
+        [string]$todir
     )
 
-    try { $zip_path = $zip_path | abspath -verify }
-    catch { throw "Failed to validate parameter <zip_path>: $($_.ToString())" }
-    $to_dir = $to_dir | abspath
-    mkdir (Split-Path $to_dir) -Force -ErrorAction stop | Out-Null
+    try { $zippath = $zippath | abspath -verify }
+    catch { throw "Failed to validate parameter <zippath>: $($_.ToString())" }
+    $todir = $todir | abspath
+    mkdir (Split-Path $todir) -Force -ErrorAction stop | Out-Null
     Add-Type -AssemblyName "system.io.compression.filesystem"
-    [io.compression.zipfile]::ExtractToDirectory($zip_path, $to_dir)
+    [io.compression.zipfile]::ExtractToDirectory($zippath, $todir)
 
     <#
     .Description
     Extracts .zip archive into a directory.
-    .PARAMETER zip_path
+    .PARAMETER zippath
     Specifies absolute or relative path to the .zip file.
     Path will be converted to absolute path and must exist, otherwise throws exception.
-    Example: -zip_path <path/to/file.zip>
-    .PARAMETER to_dir
+    Example: -zippath <path/to/file.zip>
+    .PARAMETER todir
     Specifies absolute or relative path to the directory to be compressed.
     Missing subdirectories will be created.
-    Example: -to_dir <path/to/dir>
+    Example: -todir <path/to/dir>
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
     #>
@@ -487,22 +490,22 @@ function unzip {
 #--------------------------------------------------
 function extract-file {
     param(
-        [string]$file_filter,
-        [string]$zip_path,
-        [string]$to_dir = $($PWD.path)
+        [string]$filter,
+        [string]$zippath,
+        [string]$todir = $($PWD.path)
     )
 
-    try { $zip_path = $zip_path | abspath -verify }
-    catch { throw "Failed to validate parameter <zip_path>: $($_.ToString())" }
-    $to_dir = $to_dir | abspath
-    mkdir $to_dir -Force -ErrorAction stop | Out-Null
+    try { $zippath = $zippath | abspath -verify }
+    catch { throw "Failed to validate parameter <zippath>: $($_.ToString())" }
+    $todir = $todir | abspath
+    mkdir $todir -Force -ErrorAction stop | Out-Null
     [Reflection.Assembly]::LoadWithPartialName( "System.IO.Compression.FileSystem" ) | Out-Null
-    $zipstream = [System.IO.Compression.ZipFile]::OpenRead($zip_path)
+    $zipstream = [System.IO.Compression.ZipFile]::OpenRead($zippath)
 
     foreach ($zipfile in $zipstream.Entries) {
-        if ($zipfile.Name -like $name_filter) {
-            $destination_file_path = Join-Path $to_dir $zipfile.Name
-            $filestream = New-Object IO.FileStream ($destination_file_path) , 'Append', 'Write', 'Read'
+        if ($zipfile.Name -like $filter) {
+            $destination_filepath = Join-Path $todir $zipfile.Name
+            $filestream = New-Object IO.FileStream ($destination_filepath) , 'Append', 'Write', 'Read'
             $file = $zipfile.Open()
             $file.CopyTo($filestream)
             $file.Close()
@@ -515,18 +518,18 @@ function extract-file {
     Alias: unzipf
     .Description
     Extracts files that match filter from .zip archive into a directory.
-    .PARAMETER file_filter
+    .PARAMETER filter
     Specifies mask to filter file names in the .zip archive.
     Accepts wildcards "*".
-    Example: -file_filter <*.txt>
-    .PARAMETER zip_path
+    Example: -filter <*.txt>
+    .PARAMETER zippath
     Specifies absolute or relative path to the .zip file.
     Path will be converted to absolute path and must exist, otherwise throws exception.
-    Example: -zip_path <path/to/file.zip>
-    .PARAMETER to_dir
+    Example: -zippath <path/to/file.zip>
+    .PARAMETER todir
     Specifies absolute or relative path to the directory to be compressed.
     Missing subdirectories will be created.
-    Example: -to_dir <path/to/dir>
+    Example: -todir <path/to/dir>
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
     #>
@@ -539,23 +542,23 @@ function get-files-with-text {
     param(
         [Parameter(ParameterSetName = "plain", Position = 0)][ValidateNotNullOrEmpty()][string]$text,
         [Parameter(ParameterSetName = "regex", Position = 0)][ValidateNotNullOrEmpty()][string]$regex,
-        [Parameter(Position = 1)][string]$search_dir = $($pwd.path),
-        [Parameter()][string]$file_filter = "*",
-        [Parameter()][switch]$not_recursevly,
+        [Parameter(Position = 1)][string]$searchdir = $($pwd.path),
+        [Parameter()][string]$filter = "*",
+        [Parameter()][switch]$norecurse,
         [Parameter()][switch]$open,
-        [Parameter()][string]$out_file
+        [Parameter()][string]$outfile
     )
 
     $ErrorActionPreference = 'Stop'
 
-    # validate <search_dir> path
-    try { $search_dir = $search_dir | abspath -verify }
-    catch { throw "Failed to validate parameter <search_dir>: $($_.ToString())" }
+    # validate <searchdir> path
+    try { $searchdir = $searchdir | abspath -verify }
+    catch { throw "Failed to validate parameter <searchdir>: $($_.ToString())" }
 
     # search text/pattern in files
     if ($PSCmdlet.ParameterSetName -eq "plain") { $search_string = $text }
     else { $search_string = $regex }
-    $file_list = (ls $search_dir -Recurse:$(!$not_recursevly.IsPresent) -Filter $file_filter | `
+    $file_list = (ls $searchdir -Recurse:$(!$norecurse.IsPresent) -Filter $filter | `
         sls -SimpleMatch:$($PSCmdlet.ParameterSetName -eq "plain") -Pattern $search_string -List).Path
 
     if ($open) {
@@ -564,10 +567,10 @@ function get-files-with-text {
         $file_list | % { & $text_editor $_ }
     }
 
-    if ($out_file) {
-        $out_file = $out_file | abspath
-        mkdir (Split-Path $out_file) -Force | Out-Null
-        $file_list | Out-File $out_file -Force
+    if ($outfile) {
+        $outfile = $outfile | abspath
+        mkdir (Split-Path $outfile) -Force | Out-Null
+        $file_list | Out-File $outfile -Force
     }
     else {
         $file_list
@@ -586,24 +589,24 @@ function get-files-with-text {
     .PARAMETER regex
     Specifies search regex pattern. Case-sensitive. Must be specified explicitly.
     Example: -regex <.*Regex(\sPattern)+.*>
-    .PARAMETER search_dir
+    .PARAMETER searchdir
     Specifies absolute or relative path to the search root directory.
     Path will be converted to absolute path and must exist, otherwise throws exception.
-    Example: -search_dir <path/to/dir>
-    .PARAMETER file_filter
+    Example: -searchdir <path/to/dir>
+    .PARAMETER filter
     Specifies mask to filter file names in the search directory and subdirectories.
     Accepts wildcards "*".
-    Example: -file_filter <*.txt>
-    .PARAMETER not_recursevly
+    Example: -filter <*.txt>
+    .PARAMETER norecurse
     Limits search to only search root directory without subdirectories.
-    Example: -not_recursevly
+    Example: -norecurse
     .PARAMETER open
     Opens found paths in the Notepad++ (or Windows notepad if Notepad++ is not available).
     Example: -open
-    .PARAMETER out_file
+    .PARAMETER outfile
     Specifies absolute or relative path to the output file where results will be sent to instead of the console.
     Missing subdirectories will be created.
-    Example: -out_file <path/to/file>
+    Example: -outfile <path/to/file>
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
     #>
@@ -615,10 +618,10 @@ function sha {
     [cmdletbinding(DefaultParameterSetName = "text")]
     param(
         [Parameter(ParameterSetName = "text", Position = 0, ValueFromPipeline = $true)][AllowEmptyString()]
-        [Alias("text")][string]$text_to_hash,
+        [Alias("text")][string]$text,
 
         [Parameter(ParameterSetName = "file", Position = 0)][ValidateNotNullOrEmpty()]
-        [Alias("file")][string]$file_to_hash,
+        [Alias("file")][string]$file,
 
         [parameter()][ValidateSet('1', '256', '384', '512')][string]$algorithm = '256'
     )
@@ -633,11 +636,11 @@ function sha {
         $ErrorActionPreference = 'Stop'
 
         if ($PSCmdlet.ParameterSetName -eq 'file') {
-            try { $file_to_hash = $file_to_hash | abspath -verify }
-            catch { throw "Failed to validate parameter <file_to_hash>: $($_.ToString())" }
-            $byte_array = [System.IO.File]::ReadAllBytes($file_to_hash)
+            try { $file = $file | abspath -verify }
+            catch { throw "Failed to validate parameter <file>: $($_.ToString())" }
+            $byte_array = [System.IO.File]::ReadAllBytes($file)
         }
-        else { $byte_array = [System.Text.Encoding]::UTF8.GetBytes($text_to_hash) }
+        else { $byte_array = [System.Text.Encoding]::UTF8.GetBytes($text) }
 
         $hash_byte_array = $hasher.ComputeHash($byte_array)
         $hash_byte_array | % { $hash_string += $_.ToString() }
@@ -649,14 +652,14 @@ function sha {
     <#
     .Description
     Generates hash for text or file using SHA- algorithm of choice. Defaults to SHA256.
-    .PARAMETER text_to_hash
+    .PARAMETER text
     Specifies text to be hashed. Allows ValueFromPipeline.
     Example 1: sha -text "some text"
     Example 2: "some text" | sha
-    .PARAMETER file_to_hash
+    .PARAMETER file
     Specifies absolute or relative path to the file for which hash string will be generated.
     Path will be converted to absolute path and must exist, otherwise throws exception.
-    Example: -file_to_hash <path/to/file>
+    Example: -file <path/to/file>
     .PARAMETER algorithm
     Specifies type of SHA- algorithm. Accepted values: '1', '256', '384', '512'.
     Defaults to '256'
@@ -670,21 +673,21 @@ function sha {
 #--------------------------------------------------
 function base64 {
     param(
-        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][Alias("text")][string]$text_to_encrypt,
+        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][Alias("text")][string]$text,
         [parameter()][switch]$decrypt
     )
 
     process {
-        if ($decrypt) { [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($text_to_encrypt)) }
-        else { [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($text_to_encrypt)) }
+        if ($decrypt) { [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($text)) }
+        else { [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($text)) }
     }
 
     <#
     .Description
     Encrypts or decrypts text using base64 encryption algorithm.
-    .PARAMETER text_to_encrypt
+    .PARAMETER text
     Specifies text to be encrypted. Allows ValueFromPipeline. This is default option.
-    Example 1: base64 -text_to_encrypt "some text"
+    Example 1: base64 -text "some text"
     Example 2: "some text" | base64
     .PARAMETER decrypt
     Decrypts input object instead of encrypting it.
@@ -697,10 +700,10 @@ function base64 {
 
 #--------------------------------------------------
 function ss-to-plain {
-    param([Parameter(Position = 0, ValueFromPipeline = $true)][System.Security.SecureString]$s_sting)
+    param([Parameter(Position = 0, ValueFromPipeline = $true)][System.Security.SecureString]$sstring)
 
     process {
-        $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($s_sting)
+        $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sstring)
         $plain_text = [Runtime.InteropServices.Marshal]::PtrToStringAuto($pointer)
         return $plain_text
     }
@@ -710,9 +713,9 @@ function ss-to-plain {
     Alias: sstp
     .Description
     Converts [SecureString] object into plain text.
-    .PARAMETER s_sting
+    .PARAMETER sstring
     Specifies [SecureString] object to be converted.
-    Example 1: ss-to-plain -s_sting $sstring
+    Example 1: ss-to-plain -sstring $sstring
     Example 2: $sstring | ss-to-plain
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
@@ -730,10 +733,10 @@ function run-sql() {
         [Parameter(Mandatory = $true, ParameterSetName = "pscred")][Alias("c")][pscredential]$credential,
         [Parameter(Mandatory = $true, ParameterSetName = "not_integrated")][Alias("u")][string]$user,
         [Parameter(Mandatory = $true, ParameterSetName = "not_integrated")][Alias("p")][securestring]$passw,
-        [Parameter(ParameterSetName = "integrated")][switch]$use_win_authentication = $true,
+        [Parameter(ParameterSetName = "integrated")][switch]$winauth = $true,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][Alias("q")][string]$query,
         [Parameter()][Alias("t")][int]$timeout = 0,
-        [Parameter(Mandatory = $true)][Alias("o")][string]$out_file,
+        [Parameter(Mandatory = $true)][Alias("o")][string]$outfile,
         [Parameter()][Alias("n")][switch]$no_success_message
     )
 
@@ -790,10 +793,10 @@ function run-sql() {
     }
 
     # dump to file
-    if ($out_file) {
-        $out_file = $out_file | abspath
-        mkdir (Split-Path $out_file) -Force | Out-Null
-        $output | Out-File $out_file -Force
+    if ($outfile) {
+        $outfile = $outfile | abspath
+        mkdir (Split-Path $outfile) -Force | Out-Null
+        $output | Out-File $outfile -Force
     }
     else {
         return $output
@@ -821,7 +824,7 @@ function run-sql() {
     .PARAMETER passw
     Specifies password to use for authentication on SQL instance.
     Example: -passw <password>
-    .PARAMETER use_win_authentication
+    .PARAMETER winauth
     This is default option that is used if neither credential nor username/password specified.
     No need to use explicitly.
     .PARAMETER query
@@ -830,10 +833,10 @@ function run-sql() {
     .PARAMETER timeout
     Specifies SQL command timeout in seconds.
     Example: -timeout 10
-    .PARAMETER out_file
+    .PARAMETER outfile
     Specifies absolute or relative path to the output file where results will be sent to instead of the console.
     Missing subdirectories will be created.
-    Example: -out_file <path/to/file>
+    Example: -outfile <path/to/file>
     .PARAMETER no_success_message
     Supresses successful execution status message that is shown by default. The message is useful when query does not expect return data.
     Example: -no_success_message
@@ -848,9 +851,9 @@ function run-process {
     param (
         [Parameter()][Alias("e")][string]$executable = $(throw "Mandatory parameter not provided: <executable>."),
         [Parameter()][Alias("a")][string]$arguments,
-        [Parameter()][Alias("w")][string]$working_directory = $PWD.path,
+        [Parameter()][Alias("w")][string]$workdir = $PWD.path,
         [Parameter()][Alias("c")][PSCredential]$credential,
-        [Parameter()][Alias("nw")][switch]$create_new_window,
+        [Parameter()][Alias("nw")][switch]$newwindow,
         [Parameter()][Alias("nc")][switch]$no_console_output
     )
 
@@ -865,14 +868,14 @@ function run-process {
     }
 
     # resolve working_directory
-    try { $working_directory = $working_directory | abspath -verify }
-    catch { throw "Failed to validate parameter <working_directory>: $($_.ToString())" }
+    try { $workdir = $workdir | abspath -verify }
+    catch { throw "Failed to validate parameter <workdir>: $($_.ToString())" }
 
     # build ProcessStartInfo object
     $ProcessInfo = New-Object System.Diagnostics.ProcessStartInfo
     $ProcessInfo.FileName = "$executable"
-    $ProcessInfo.WorkingDirectory = $working_directory
-    $ProcessInfo.CreateNoWindow = !$create_new_window.IsPresent
+    $ProcessInfo.WorkingDirectory = $workdir
+    $ProcessInfo.CreateNoWindow = !$newwindow.IsPresent
     $ProcessInfo.RedirectStandardError = $true
     $ProcessInfo.RedirectStandardOutput = $true
     $ProcessInfo.UseShellExecute = $false
@@ -923,17 +926,17 @@ function run-process {
     .PARAMETER arguments
     Specifies arguments to be passed to the executable as a single string.
     Example: -arguments "/C first_arg second_arg"
-    .PARAMETER working_directory
+    .PARAMETER workdir
     Specifies directory from where executable should run.
     Directory path will be converted to absolute path and must exist, otherwise throws exception.
     Defaults to current directory.
-    Example: -working_directory <path/to/dir>
+    Example: -workdir <path/to/dir>
     .PARAMETER credential
     Specifies PSCredential to run executable in the scope of another user.
     Example: -credential <pscredential_object>
-    .PARAMETER create_new_window
+    .PARAMETER newwindow
     Allows executable to run in a new window outside of current console.
-    Example: -create_new_window
+    Example: -newwindow
     .PARAMETER no_console_output
     Disables printing of child process output into the console during execution.
     By default, run-process emits output of the child process into the console
@@ -953,7 +956,7 @@ function list-installed-software {
         [Parameter(Position = 2)][string]$publisher_filter = '*',
         [Parameter(Position = 3)][string]$hive_filter = '*',
         [Parameter(Position = 4)][string[]]$show_properties = @('name'),
-        [Parameter(Position = 5)][string]$out_file
+        [Parameter(Position = 5)][string]$outfile
     )
 
 
@@ -1014,10 +1017,10 @@ function list-installed-software {
 
     $final_result_set = $sorted_result_set | select $optimized_properties
 
-    if ($out_file) {
-        $out_file = $out_file | abspath
-        mkdir (Split-Path $out_file) -Force -ErrorAction Stop | Out-Null
-        $final_result_set | Out-File $out_file -Force
+    if ($outfile) {
+        $outfile = $outfile | abspath
+        mkdir (Split-Path $outfile) -Force -ErrorAction Stop | Out-Null
+        $final_result_set | Out-File $outfile -Force
     }
     else {
         $final_result_set
@@ -1050,9 +1053,9 @@ function list-installed-software {
     Accepted values: 'name', 'version', 'publisher', 'install_location', 'uninstall_string', 'hive', '*'.
     If '*' specified, all supported properties will be included, no need to specify them explicitly.
     Example: -properties name, version, publisher
-    .PARAMETER out_file_path
+    .PARAMETER outfile
     Specifies file path to output result set. If not specified, result set is displayed in console instead.
-    Example: -out_file_path app_list.txt
+    Example: -outfile app_list.txt
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
     #>
@@ -1062,53 +1065,53 @@ function list-installed-software {
 #--------------------------------------------------
 function file-tabs-to-spaces {
     param(
-        [Parameter(Position = 0)][string]$file_path,
-        [Parameter(Position = 1)][string]$out_file = $file_path,
-        [Parameter(Position = 2)][int]$tab_size = 4
+        [Parameter(Position = 0)][string]$filepath,
+        [Parameter(Position = 1)][string]$outfile = $filepath,
+        [Parameter(Position = 2)][int]$tabsize = 4
     )
 
     $ErrorActionPreference = 'Stop'
     $converted_content = @()
 
     # validate input parameters
-    try { $file_path_absolute = $file_path | abspath -verify }
-    catch { throw "Failed to validate parameter <file_path>: $($_.ToString())" }
-    if ($out_file -eq $file_path) {
-        $out_file = $file_path_absolute
+    try { $filepath_absolute = $filepath | abspath -verify }
+    catch { throw "Failed to validate parameter <filepath>: $($_.ToString())" }
+    if ($outfile -eq $filepath) {
+        $outfile = $filepath_absolute
     }
     else {
-        $out_file = $out_file | abspath
-        mkdir (Split-Path $out_file) -Force | Out-Null
+        $outfile = $outfile | abspath
+        mkdir (Split-Path $outfile) -Force | Out-Null
     }
 
     # process file content
-    Get-Content $file_path_absolute | % {
+    Get-Content $filepath_absolute | % {
         $line = $_
         while ( $true ) {
             $i = $line.IndexOf([char] 9)
             if ( $i -eq -1 ) { break }
-            if ( $tab_size -gt 0 ) { $pad = " " * ($tab_size - ($i % $tab_size)) }
+            if ( $tabsize -gt 0 ) { $pad = " " * ($tabsize - ($i % $tabsize)) }
             else { $pad = "" }
             $line = $line -replace "^([^\t]{$i})\t(.*)$", "`$1$pad`$2"
         }
         $converted_content += $line
     }
-    Set-Content $out_file -Value $converted_content -Force
+    Set-Content $outfile -Value $converted_content -Force
 
     <#
     .Description
     Converts tabs into spaces in a file (in-place or into a new file).
-    .PARAMETER file_path
+    .PARAMETER filepath
     Specifies absolute or relative path to the file to be converted.
     Path will be converted to absolute path and must exist, otherwise throws exception.
-    Example: -file_path <path/to/file>
-    .PARAMETER out_file
+    Example: -filepath <path/to/file>
+    .PARAMETER outfile
     Specifies absolute or relative path to the file where to send converted content to instead of the original file.
     Missing subdirectories will be created.
-    Example: -out_file <path/to/file>
-    .PARAMETER tab_size
+    Example: -outfile <path/to/file>
+    .PARAMETER tabsize
     Specifies number of spaces that constitute single tab character.
-    Example: -tab_size 2
+    Example: -tabsize 2
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
     #>
@@ -1118,27 +1121,27 @@ function file-tabs-to-spaces {
 #--------------------------------------------------
 function file-hex-dump {
     param(
-        [Parameter(Position = 0)][Alias("file")][string]$file_path,
+        [Parameter(Position = 0)][Alias("file")][string]$filepath,
         [Parameter(Position = 1)][Alias("width")][int]$table_width = 20,
         [Parameter(Position = 2)][Alias("len")][int]$number_of_bytes = -1, # defaults to all
-        [Parameter(Position = 3)][string]$out_file
+        [Parameter(Position = 3)][string]$outfile
     )
 
     $ErrorActionPreference = 'Stop'
     $OFS = ""
 
     # validate input parameters
-    try { $file_path = $file_path | abspath -verify }
-    catch { throw "Failed to validate parameter <file_path>: $($_.ToString())" }
-    if ($out_file) {
-        $out_file = $out_file | abspath
-        mkdir (Split-Path $out_file) -Force | Out-Null
-        ni $out_file -Force | Out-Null
+    try { $filepath = $filepath | abspath -verify }
+    catch { throw "Failed to validate parameter <filepath>: $($_.ToString())" }
+    if ($outfile) {
+        $outfile = $outfile | abspath
+        mkdir (Split-Path $outfile) -Force | Out-Null
+        ni $outfile -Force | Out-Null
     }
 
     # process file
     Get-Content -Encoding byte `
-                    -Path $file_path `
+                    -Path $filepath `
                     -ReadCount $table_width `
                     -TotalCount $number_of_bytes | `
         % {
@@ -1150,7 +1153,7 @@ function file-hex-dump {
                         if ([char]::IsLetterOrDigit($_)) { [char] $_ }
                         else { "." }
                     }
-                if ($out_file) { "$hex $char" | Out-File $out_file -Force -Append }
+                if ($outfile) { "$hex $char" | Out-File $outfile -Force -Append }
                 else { "$hex $char" }
             }
         }
@@ -1158,20 +1161,20 @@ function file-hex-dump {
     <#
     .Description
     Generates HEX table of a file's binary data.
-    .PARAMETER file_path
+    .PARAMETER filepath
     Specifies absolute or relative path to the file to generate HEX table for.
     Path will be converted to absolute path and must exist, otherwise throws exception.
-    Example: -file_path <path/to/file>
+    Example: -filepath <path/to/file>
     .PARAMETER table_width
     Specifies width of HEX table.
     Example: -table_width 15
     .PARAMETER number_of_bytes
     Specifies amount of bytes to display. Defaults to all (-1).
     Example: -number_of_bytes 1000
-    .PARAMETER out_file
+    .PARAMETER outfile
     Specifies absolute or relative path to the output file where HEX table will be sent to instead of the console.
     Missing subdirectories will be created.
-    Example: -out_file <path/to/file>
+    Example: -outfile <path/to/file>
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
     #>
@@ -1181,21 +1184,22 @@ function file-hex-dump {
 #--------------------------------------------------
 function ll {
     param(
-        [Parameter(Position = 0)][string]$dir_path = $PWD.path,
+        [Parameter(Position = 0)][string]$dirpath = $PWD.path,
         [Parameter()][string]$filter = '*',
         [parameter()][ValidateSet('Name', 'Size', 'Date')][string]$sort_by = 'Name',
         [Parameter()][switch]$desc,
         [Parameter()][switch]$file,
-        [Parameter()][int]$spacer_size = 4
+        [Parameter()][switch]$trim_name,
+        [Parameter()][int]$spacer = 4
     )
 
     $ErrorActionPreference = 'Stop'
-    # validate dir_path parameter
-    try { $dir_path = $dir_path | abspath -verify }
-    catch { throw "Failed to validate parameter <dir_path>: $($_.ToString())" }
+    # validate dirpath parameter
+    try { $dirpath = $dirpath | abspath -verify }
+    catch { throw "Failed to validate parameter <dirpath>: $($_.ToString())" }
 
     $dir_content = @()
-    $sp = " " * $spacer_size
+    $sp = " " * $spacer
     switch ($sort_by) {
         'name' { $sort_attr = 'Name' }
         'size' { $sort_attr = 'Length' }
@@ -1206,12 +1210,13 @@ function ll {
         'Size'          = 0;
         'LastWriteTime' = 0;
     }
+    $trim_size = 38
 
     # natural sort for numbered items
     $to_natural = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 
     # sort by Date
-    if ($sort_attr -eq 'LastWriteTime') { $ls_output = ls $dir_path -Filter $filter -File:$file | sort $sort_attr -Descending:$(!$desc.IsPresent) }
+    if ($sort_attr -eq 'LastWriteTime') { $ls_output = ls $dirpath -Filter $filter -File:$file | sort $sort_attr -Descending:$(!$desc.IsPresent) }
     else {
         if (!$file) {
             # if $sort_by == 'Size', sort directories by name instead, because they all have Size == 0
@@ -1219,12 +1224,12 @@ function ll {
             if ($sort_attr_dir -eq 'Length') { $sort_attr_dir = 'Name' }
 
             # sort directories
-            if ($sort_attr_dir -eq 'Name') { $ls_output_dirs = ls $dir_path -Filter $filter -Directory | sort $to_natural -Descending:$desc.IsPresent }
+            if ($sort_attr_dir -eq 'Name') { $ls_output_dirs = ls $dirpath -Filter $filter -Directory | sort $to_natural -Descending:$desc.IsPresent }
         }
 
         # files
-        if ($sort_attr -eq 'Name') { $ls_output_files = ls $dir_path -Filter $filter -File | sort $to_natural -Descending:$desc.IsPresent }
-        if ($sort_attr -eq 'Length') { $ls_output_files = ls $dir_path -Filter $filter -File | sort $sort_attr -Descending:$desc.IsPresent }
+        if ($sort_attr -eq 'Name') { $ls_output_files = ls $dirpath -Filter $filter -File | sort $to_natural -Descending:$desc.IsPresent }
+        if ($sort_attr -eq 'Length') { $ls_output_files = ls $dirpath -Filter $filter -File | sort $sort_attr -Descending:$desc.IsPresent }
 
         # concatenate all with directories first
         $ls_output = $ls_output_dirs + $ls_output_files   
@@ -1267,29 +1272,38 @@ function ll {
         $dir_content += $item_dict
 
         if ($columns_sizes.Name -lt $item.Name.Length) { $columns_sizes.Name = $item.Name.Length }
+        if ($trim_name -and ($columns_sizes.Name -gt $trim_size)) { $columns_sizes.Name = $trim_size }
         if ($columns_sizes.Size -lt "$size $unit".Length) { $columns_sizes.Size = "$size $unit".Length }
     }
 
+    # print dirictory content
     if ($dir_content.Length -gt 0) {
+
+        # header
         $title = "Attrib" + $sp
-        $title += "Name" + " " * ($columns_sizes.Name + $spacer_size - 4)
-        $title += "Size" + " " * ($columns_sizes.Size + $spacer_size - 4)
+        $title += "Name" + " " * ($columns_sizes.Name + $spacer - 4)
+        $title += "Size" + " " * ($columns_sizes.Size + $spacer - 4)
         $title += "Date Modified"
         if ($title.length -gt $Host.UI.RawUI.WindowSize.Width) { $title = $title.Substring(0, $Host.UI.RawUI.WindowSize.Width) }
         write "`n$title"
 
+        # divider
         $div_char = [string][char]9472
         $divider = $div_char * 6 + $sp
-        $divider += $div_char * 4 + " " * ($columns_sizes.Name + $spacer_size - 4)
-        $divider += $div_char * 4 + " " * ($columns_sizes.Size + $spacer_size - 4)
+        $divider += $div_char * 4 + " " * ($columns_sizes.Name + $spacer - 4)
+        $divider += $div_char * 4 + " " * ($columns_sizes.Size + $spacer - 4)
         $divider += $div_char * 13
         if ($divider.length -gt $Host.UI.RawUI.WindowSize.Width) { $divider = $divider.Substring(0, $Host.UI.RawUI.WindowSize.Width) }
         write $divider
 
+        # list directory children
         foreach ($item in $dir_content) {
+            if ($trim_name) {
+                if ($item.Name.Length -gt $trim_size) { $item.Name = $item.Name.Substring(0, $trim_size - 3) + "..." }
+            }
             $line = $item.Mode + $sp
-            $line += $item.Name + " " * ($columns_sizes.Name + $spacer_size - $item.Name.Length)
-            $line += $item.Size + " " * ($columns_sizes.Size + $spacer_size - $item.Size.Length)
+            $line += $item.Name + " " * ($columns_sizes.Name + $spacer - $item.Name.Length)
+            $line += $item.Size + " " * ($columns_sizes.Size + $spacer - $item.Size.Length)
             $line += $item.LastWriteTime
             if ($line.length -gt $Host.UI.RawUI.WindowSize.Width) { $line = $line.Substring(0, $Host.UI.RawUI.WindowSize.Width) }
             write $line
@@ -1300,11 +1314,11 @@ function ll {
     .Description
     Cosmetic substitute for built-in Get-ChildItem command. Displays directory content in nicely formatted form.
     Only includes most common collumns. Allows to sort by each column. Does not support recursion.
-    .PARAMETER dir_path
+    .PARAMETER dirpath
     Specifies absolute or relative path to the directory to list.
     Path will be converted to absolute path and must exist, otherwise throws exception.
     Defaults to the current directory.
-    Example: -dir_path <path/to/file>
+    Example: -dirpath <path/to/file>
     .PARAMETER filter
     Filters included files and directories. Accepts wildcards '*'.
     Example: -filter *.ps1
@@ -1315,9 +1329,12 @@ function ll {
     .PARAMETER desc
     Changes sort order to descending.
     Example: -desc
-    .PARAMETER spacer_size
+    .PARAMETER trim_name
+    Trims long filenames to preset length (38 characters).
+    Example: -trim_name
+    .PARAMETER spacer
     Specifies number of spaces between columns.
-    Example: -spacer_size 5
+    Example: -spacer 5
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
     #>
@@ -1327,13 +1344,13 @@ function ll {
 #--------------------------------------------------
 function unblock-downloaded {
     param (
-        [Parameter(Position = 0)][string]$dir_path,
+        [Parameter(Position = 0)][string]$dirpath,
         [Parameter(Position = 1)][switch]$recurse
     )
 
-    if ($dir_path) { $dir_path = $dir_path | abspath -verify }
-    else { $dir_path = '~\Downloads' | abspath -verify }
-    ls $dir_path -File -Recurse:$recurse | Unblock-File
+    if ($dirpath) { $dirpath = $dirpath | abspath -verify }
+    else { $dirpath = '~\Downloads' | abspath -verify }
+    ls $dirpath -File -Recurse:$recurse | Unblock-File
 
     <#
     .SYNOPSIS
@@ -1341,9 +1358,9 @@ function unblock-downloaded {
     .Description
     Unblocks files in the "$HOME\Downloads" directory (and optionally in it's children).
     Optionally unblocks in the specified directory (and optionally in it's children).
-    .PARAMETER dir_path
+    .PARAMETER dirpath
     If specified, unblocks files in the target directory instead of default "$HOME\Downloads".
-    Example: -dir_path <some/dir>
+    Example: -dirpath <some/dir>
     .PARAMETER recurse
     If specified, includes target directory children recursivly.
     Example: -recurse
@@ -1377,7 +1394,7 @@ function get-dotnet-fwk-version {
     catch { error $_.exception }
 
     if ([int]$release -lt 378389) {
-        warning ".NET 4.5 or later is not detected" -no_prefix
+        warning ".NET 4.5 or later is not detected" -noprefix
         return ""
     }
 
