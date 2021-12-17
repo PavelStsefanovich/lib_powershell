@@ -320,7 +320,7 @@ function abspath {
     )
 
     process {
-        $path = $path -replace '^~', "$HOME\"
+        $path = $path -replace '^~', "$HOME"
         if ([System.IO.Path]::IsPathRooted($path)) { $abspath = $path}
         else { $abspath = (Join-Path ($parent | abspath) $path) }
         if ($verify) { $abspath = (Resolve-Path $abspath -ErrorAction Stop).Path }
@@ -513,6 +513,8 @@ function extract-file {
         }
     }
 
+    $zipstream.Dispose()
+
     <#
     .SYNOPSIS
     Alias: unzipf
@@ -617,12 +619,8 @@ function get-files-with-text {
 function sha {
     [cmdletbinding(DefaultParameterSetName = "text")]
     param(
-        [Parameter(ParameterSetName = "text", Position = 0, ValueFromPipeline = $true)][AllowEmptyString()]
-        [Alias("text")][string]$text,
-
-        [Parameter(ParameterSetName = "file", Position = 0)][ValidateNotNullOrEmpty()]
-        [Alias("file")][string]$file,
-
+        [Parameter(ParameterSetName = "text", Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$text,
+        [Parameter(ParameterSetName = "file", Position = 0)][ValidateNotNullOrEmpty()][string]$file,
         [parameter()][ValidateSet('1', '256', '384', '512')][string]$algorithm = '256'
     )
 
@@ -673,7 +671,7 @@ function sha {
 #--------------------------------------------------
 function base64 {
     param(
-        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][Alias("text")][string]$text,
+        [Parameter(Position = 0, ValueFromPipeline = $true)][AllowEmptyString()][string]$text,
         [parameter()][switch]$decrypt
     )
 
@@ -1232,7 +1230,7 @@ function ll {
         if ($sort_attr -eq 'Length') { $ls_output_files = ls $dirpath -Filter $filter -File | sort $sort_attr -Descending:$desc.IsPresent }
 
         # concatenate all with directories first
-        $ls_output = $ls_output_dirs + $ls_output_files   
+        $ls_output = $ls_output_dirs + $ls_output_files
     }
 
     foreach ($item in $ls_output) {

@@ -12,7 +12,7 @@
 RootModule = './UtilityFunctions.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.0'
+ModuleVersion = '0.4.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -69,12 +69,13 @@ PowerShellVersion = '5.1'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'newline', 'error', 'info', 'warning', 'request-consent', 'wait-any-key', 
-               'isadmin', 'restart-elevated', 'is-restart-pending', 'hibernate', 
-               'json-to-hashtable', 'abspath', 'which', 'list-module-commands', 'zip', 
-               'unzip', 'extract-file', 'get-files-with-text', 'sha', 'base64', 
-               'ss-to-plain', 'run-sql', 'run-process', 'list-installed-software', 
-               'file-tabs-to-spaces', 'file-hex-dump', 'll', 'unblock-downloaded'
+FunctionsToExport = 'newline', 'error', 'info', 'warning', 'request-consent', 'wait-any-key',
+               'isadmin', 'restart-elevated', 'is-restart-pending', 'hibernate',
+               'json-to-hashtable', 'abspath', 'which', 'list-module-commands', 'zip',
+               'unzip', 'extract-file', 'get-files-with-text', 'sha', 'base64',
+               'ss-to-plain', 'run-sql', 'run-process', 'list-installed-software',
+               'file-tabs-to-spaces', 'file-hex-dump', 'll', 'unblock-downloaded',
+               'get-dotnet-fwk-version'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
@@ -83,8 +84,8 @@ CmdletsToExport = @()
 # VariablesToExport = @()
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = 'lf', 'confirm', 'jth', 'sstp', 'isrp', 'hib', 'wait', 'fwt', 'listmc', 'sql', 'run', 
-               'unzipf', 'listis', 'dsort', 'unb'
+AliasesToExport = 'lf', 'confirm', 'jth', 'sstp', 'isrp', 'hib', 'wait', 'fwt', 'listmc', 'sql', 'run',
+               'unzipf', 'listis', 'dsort', 'unb', 'netfwk'
 
 # DSC resources to export from this module
 # DscResourcesToExport = @()
@@ -113,7 +114,7 @@ PrivateData = @{
         IconUri = 'https://raw.githubusercontent.com/PavelStsefanovich/lib_powershell/5ecc43ec43a7552e3e51de0f31fde834085f632e/modules/UtilityFunctions/favicon.ico'
 
         # ReleaseNotes of this module
-        ReleaseNotes = 'Added function unblock-downloaded(); Bug fixes'
+        ReleaseNotes = 'Added get-dotnet-fwk-version function; Simplified params spelling wherever possible; Various bug fixes and improvements'
 
         # Prerelease string of this module
         # Prerelease = ''

@@ -1,5 +1,5 @@
 # UtilityFunctions
-*Common operations and standardized console output messages*
+*Common utilities and standardized console output messages for PowerShell admins*
 
 ### Installation
     Install-Module -Name UtilityFunctions
@@ -26,6 +26,7 @@ https://www.powershellgallery.com/packages/UtilityFunctions
 | extract-file | unzipf | Extract specific files from .zip archive |
 | file-hex-dump |  | Generate HEX table for a file |
 | file-tabs-to-spaces |  | Replace tabs with spaces in a file |
+| get-dotnet-fwk-version | netfwk | Print highest installed version of .NET framework |
 | get-files-with-text | fwt | Print (or open) texfiles that contain search string |
 | hibernate | hib | Put computer to sleep |
 | info |  | Print info message into console |
