@@ -1,4 +1,90 @@
-function Get-RegistryValue {
+$hives = @{
+    'HKCR' = 'HKEY_CLASSES_ROOT';
+    'HKCU' = 'HKEY_CURRENT_USER';
+    'HKLM' = 'HKEY_LOCAL_MACHINE';
+    'HKU'  = 'HKEY_USERS';
+    'HKCC' = 'HKEY_CURRENT_CONFIG'
+}
+
+$registryDrives = (Get-PSDrive | ? { $_.Provider.name -eq 'Registry' }).Name
+
+foreach ($hive in $hives.Keys) {
+    if ($hive -notin $registryDrives) {
+        New-PSDrive -Name $hive -PSProvider Registry -Root $hives.$hive -ErrorAction stop | Out-Null
+    }
+}
+
+
+
+#--------------------------------------------------
+function Convert-RegistryPath {
+    param(
+        [Parameter(Position = 0, ValueFromPipeline = $true)]
+        [AllowEmptyString()]
+        [string]$RegPath
+    )
+
+    process {
+        # replace slashes with backslashes
+        $RegPath = $RegPath.Replace('/', '\')
+
+        # remove prefix 'Computer'
+        $RegPath = $RegPath -replace '^Computer\\', ''
+
+        # replace long-formatted name with abbreviation
+        if ($RegPath.StartsWith('HKEY_')) {
+            if ($RegPath -match '(^HKEY_[a-zA-Z_]+)\\') {
+                $hiveLongName = $Matches[1]
+                $hive = ($hives.GetEnumerator() | ? { $_.value -eq $hiveLongName }).name
+                $RegPath = $RegPath.Replace($hiveLongName, $hive)
+            }
+        }
+
+        # convert to PS provider path
+        foreach ($hive in $hives.Keys) {
+            if ($RegPath.ToUpper().StartsWith($hive)) {
+
+                # only Registry-specific paths are validated
+                $regPathValidated = $true
+
+                if ($RegPath -notmatch '^[a-zA-Z]+:\\\.*') {
+                    $RegPath = $RegPath -replace "^$hive", "$hive`:"
+                }
+
+                break
+            }
+        }
+
+        if (!$regPathValidated) { throw "Failed to convert path `"$RegPath`"" }
+
+        # send result to pipeline
+        $RegPath
+    }
+}
+
+#--------------------------------------------------
+function Show-RegKey {
+    param(
+        [string]$RegPath = $(throw "Required argument not provided: <RegPath>."),
+        [switch]$SubKeys
+    )
+
+    $RegPath = Convert-RegistryPath $RegPath
+
+    if ($SubKeys) {
+        $keys = (ls $RegPath).name | sort | Split-Path -Leaf
+        $keys
+    }
+    else {
+        $keys = (ls $RegPath).name | sort
+        $properties = (gi $RegPath).property | sort
+        $keys
+        $properties
+    }
+}
+
+
+function Get-RegKeyProperties {
     [CmdletBinding()]
     param (
         [parameter()]
@@ -94,3 +180,18 @@ function Set-RegistryValueData {
 }
 
 Export-ModuleMember -Function *
+
+
+
+# TODO WinRegistry
+
+# public:
+# Get-RegKey : list subkeys and values
+# Get-RegKeyValues : filtered list of the key values
+# Get-RegValueData : return value of specific key attribute
+# Get-RegValueDataType : return type of specific key attribute value
+# Set-RegValueData : set value of specific key attribute
+
+# private:
+# convert registry path to PS format: HKLM:\
+# convert registry path to REGEDIT format: HKEY_LOCAL_MACHINE
