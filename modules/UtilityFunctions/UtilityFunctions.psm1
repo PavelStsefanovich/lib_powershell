@@ -1353,6 +1353,53 @@ function unblock-downloaded {
 }
 
 
+#--------------------------------------------------
+function get-dotnet-fwk-version {
+
+    $dotnet_registry_key = "HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\"
+
+    $dotnet_releases = @{
+        "378389" = "4.5";
+        "378675" = "4.5.1"
+        "379893" = "4.5.2";
+        "393295" = "4.6";
+        "394254" = "4.6.1";
+        "394802" = "4.6.2";
+        "460798" = "4.7";
+        "461308" = "4.7.1";
+        "461808" = "4.7.2";
+        "528040" = "4.8"
+    }
+
+    $installed_releases = @()
+
+    try { $release = (Get-ItemProperty $dotnet_registry_key -Name Release).Release }
+    catch { error $_.exception }
+
+    if ([int]$release -lt 378389) {
+        warning ".NET 4.5 or later is not detected" -no_prefix
+        return ""
+    }
+
+    foreach ($key in ($dotnet_releases.Keys | sort -Descending)) {
+        if ([int]$release -ge [int]$key) { return $dotnet_releases.$key }
+    }
+
+    error "Failed to determine highest .NET Framework."
+    return ""
+
+    <#
+    .SYNOPSIS
+    Alias: netfwk
+    .Description
+    Returns highest installed version of .NET framework.
+    Does not accept any parameters.
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
+}
+
+
 
 #--------------------------------------------------
 Set-Alias -Name lf -Value newline -Force
@@ -1370,5 +1417,6 @@ Set-Alias -Name unzipf -Value extract-file -Force
 Set-Alias -Name listis -Value list-installed-software -Force
 Set-Alias -Name dsort -Value dir-natural-sort -Force
 Set-Alias -Name unb -Value unblock-downloaded -Force
+Set-Alias -Name netfwk -Value get-dotnet-fwk-version -Force
 
 Export-ModuleMember -Function * -Alias *
