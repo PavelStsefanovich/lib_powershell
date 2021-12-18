@@ -83,20 +83,61 @@ function Show-RegKey {
     }
 }
 
-
+#--------------------------------------------------
 function Get-RegKeyProperties {
-    [CmdletBinding()]
     param (
-        [parameter()]
-        [string]$key = $(throw "Mandatory argument not provided: <key>."),
+        [Parameter(Position = 0)]
+        [string]$RegPath = $(throw "Required argument not provided: -RegPath."),
 
-        [parameter()]
-        [string]$item = '*'
+        [string]$Filter = '*',
+
+        [switch]$Detailed,
+
+        [Parameter(ParameterSetName = "detailed")]
+        [ValidateScript({
+                if (!$Detailed) { throw "Parameter -AsHashtable can only be used after -Detailed." }
+                $true
+            })]
+        [switch]$AsHashtable
     )
 
-    $ErrorActionPreference = 'Stop'
-    $regValues = (gi $key).property | ? { $_ -like $item }
-    return $regValues
+    $RegPath = Convert-RegistryPath $RegPath
+    $propNames = (gi $RegPath).property | ? { $_ -like $Filter } | sort
+    $propNameMaxLength = ($propNames | % { $_.length } | measure -Maximum).Maximum
+
+    # return only properties names
+    if (!$Detailed) { return $propNames }
+
+    $properties = [ordered]@{}
+
+    foreach ($prop in $propNames) {
+        $propValue = Get-ItemProperty $RegPath | Select-Object -ExpandProperty $prop
+        $propType = ([string](gi $RegPath).getvaluekind($prop)).toUpper()
+        $properties.Add($prop, @{ 'value' = $propValue; 'type' = $propType })
+    }
+
+    # return null if no properties found
+    if ($properties.Count -eq 0) { return $null }
+
+    # return results as hashtable
+    if ($AsHashtable) { return $properties }
+
+    # return results as array of formatted strings
+    if ($propNameMaxLength -gt 36) { $propNameMaxLength = 36 }
+    $spacing = " " * 4
+    $padName = $propNameMaxLength
+    $padType = 12
+
+    $output = @('Name'.PadRight($padName), 'Type'.PadRight($padType), 'Value' -join $spacing)
+    $output += , ('----'.PadRight($padName), '----'.PadRight($padType), '----' -join $spacing)
+
+    foreach ($prop in $properties.keys) {
+        $propName = $prop
+        if ($propName.length -gt $padName) { $propName = $propName.SubString(0, $padName - 3) + '...' }
+        $output += , ($propName.PadRight($padName), $properties.$prop.type.PadRight($padType), $properties.$prop.value -join $spacing)
+    }
+
+    return $output
 }
 
 #--------------------------------------------------
@@ -107,7 +148,7 @@ function Get-RegistryValueData {
         [string]$key = $(throw "Mandatory argument not provided: <key>."),
 
         [parameter()]
-        [string]$item = $(throw "Mandatory argument not provided: <item>.")
+        [string]$item = $(throw "Mandatory argument not provided: <filter>.")
     )
 
     $ErrorActionPreference = 'Stop'
