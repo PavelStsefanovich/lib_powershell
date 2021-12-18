@@ -41,20 +41,20 @@ Function Get-Order {
             $paramDictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
             $paramDictionary.Add('age', $ageParam)
             return $paramDictionary
-       }
-  } 
+        }
+    }
 
-   Begin {
-       if ($PSBoundParameters.age -and $PSBoundParameters.age -lt 21) {
-           Write-Error "You are not old enough for Hard Lemonade. How about a nice glass of regular Lemonade instead?" -ErrorAction Stop
-       }
-   }
+    Begin {
+        if ($PSBoundParameters.age -and $PSBoundParameters.age -lt 21) {
+            Write-Error "You are not old enough for Hard Lemonade. How about a nice glass of regular Lemonade instead?" -ErrorAction Stop
+        }
+    }
 
-   Process {
-       $order = @()
-       for ($cup = 1; $cup -le $cups; $cup++) {
-           $order += "$($cup): A cup of $($product)"
-       }
-       $order
-   }
+    Process {
+        $order = @()
+        for ($cup = 1; $cup -le $cups; $cup++) {
+            $order += "$($cup): A cup of $($product)"
+        }
+        $order
+    }
 }
