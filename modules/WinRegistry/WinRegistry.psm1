@@ -1,3 +1,5 @@
+$ErrorActionPreference = 'Stop'
+
 $hives = @{
     'HKCR' = 'HKEY_CLASSES_ROOT';
     'HKCU' = 'HKEY_CURRENT_USER';
@@ -6,18 +8,27 @@ $hives = @{
     'HKCC' = 'HKEY_CURRENT_CONFIG'
 }
 
+$types = @{
+    'REG_SZ'        = 'STRING';
+    'REG_EXPAND_SZ' = 'EXPANDSTRING';
+    'REG_MULTI_SZ'  = 'MULTISTRING';
+    'REG_DWORD'     = 'DWORD';
+    'REG_QWORD'     = 'QWORD';
+    'REG_BINARY'    = 'BINARY'
+}
+
 $registryDrives = (Get-PSDrive | ? { $_.Provider.name -eq 'Registry' }).Name
 
 foreach ($hive in $hives.Keys) {
     if ($hive -notin $registryDrives) {
-        New-PSDrive -Name $hive -PSProvider Registry -Root $hives.$hive -ErrorAction stop | Out-Null
+        New-PSDrive -Name $hive -PSProvider Registry -Root $hives.$hive | Out-Null
     }
 }
 
 
 
 #--------------------------------------------------
-function Convert-RegistryPath {
+function Convert-RegPath {
     param(
         [Parameter(Position = 0, ValueFromPipeline = $true)]
         [AllowEmptyString()]
@@ -63,21 +74,55 @@ function Convert-RegistryPath {
 }
 
 #--------------------------------------------------
-function Show-RegKey {
-    param(
+function New-RegKey {
+    param (
+        [Parameter(Position = 0)]
         [string]$RegPath = $(throw "Required argument not provided: <RegPath>."),
+
+        [Parameter(Position = 1)]
+        [switch]$Force
+    )
+
+    if (!$Force) { throw "Parameter -Force is required to confirm this operation." }
+
+    $RegPath = Convert-RegPath $RegPath
+    $paths = @()
+
+    while (!(Test-Path $RegPath)) {
+        $paths += , $RegPath
+        $RegPath = $RegPath | Split-Path
+    }
+    try {
+        $paths[($paths.Length - 1)..0] | % { New-Item $_ | Out-Null }
+    }
+    catch {
+        if ($_.Exception -like "*Requested registry access is not allowed*") {
+            throw "Access denied. Are you running as administrator?"
+        }
+
+        throw $_
+    }
+}
+
+#--------------------------------------------------
+function Show-RegKey {
+    param (
+        [Parameter(Position = 0)]
+        [string]$RegPath = $(throw "Required argument not provided: <RegPath>."),
+
+        [Parameter(Position = 1)]
         [switch]$SubKeys
     )
 
-    $RegPath = Convert-RegistryPath $RegPath
+    $RegPath = Convert-RegPath $RegPath
 
     if ($SubKeys) {
-        $keys = (ls $RegPath).name | sort | Split-Path -Leaf
+        $keys = (Get-ChildItem $RegPath).name | sort | Split-Path -Leaf
         $keys
     }
     else {
-        $keys = (ls $RegPath).name | sort
-        $properties = (gi $RegPath).property | sort
+        $keys = (Get-ChildItem $RegPath).name | sort
+        $properties = (Get-Item $RegPath).property | sort
         $keys
         $properties
     }
@@ -89,11 +134,13 @@ function Get-RegKeyProperties {
         [Parameter(Position = 0)]
         [string]$RegPath = $(throw "Required argument not provided: -RegPath."),
 
+        [Parameter(Position = 1)]
         [string]$Filter = '*',
 
+        [Parameter(Position = 2)]
         [switch]$Detailed,
 
-        [Parameter(ParameterSetName = "detailed")]
+        [Parameter(ParameterSetName = "detailed", Position = 3)]
         [ValidateScript({
                 if (!$Detailed) { throw "Parameter -AsHashtable can only be used after -Detailed." }
                 $true
@@ -101,9 +148,9 @@ function Get-RegKeyProperties {
         [switch]$AsHashtable
     )
 
-    $RegPath = Convert-RegistryPath $RegPath
-    $propNames = (gi $RegPath).property | ? { $_ -like $Filter } | sort
-    $propNameMaxLength = ($propNames | % { $_.length } | measure -Maximum).Maximum
+    $RegPath = Convert-RegPath $RegPath
+    $propNames = (Get-Item $RegPath).property | ? { $_ -like $Filter } | sort
+    $propNameMaxLength = ($propNames | % { $_.length } | Measure-Object -Maximum).Maximum
 
     # return only properties names
     if (!$Detailed) { return $propNames }
@@ -141,98 +188,157 @@ function Get-RegKeyProperties {
 }
 
 #--------------------------------------------------
-function Get-RegistryValueData {
-    [CmdletBinding()]
+function Get-RegKeyPropertyValue {
     param (
-        [parameter()]
-        [string]$key = $(throw "Mandatory argument not provided: <key>."),
+        [Parameter(Position = 0)]
+        [string]$RegPath = $(throw "Required argument not provided: -RegPath."),
 
-        [parameter()]
-        [string]$item = $(throw "Mandatory argument not provided: <filter>.")
+        [parameter(Position = 1)]
+        [string]$Property = $(throw "Required argument not provided: -Property."),
+
+        [parameter(Position = 2)]
+        [switch]$GetType
     )
 
-    $ErrorActionPreference = 'Stop'
-    $keyValue = Get-ItemProperty $key | Select-Object -ExpandProperty $item
-    return $keyValue
+    $RegPath = Convert-RegPath $RegPath
+
+    # return property value type
+    if ($GetType) {
+        $valueType = ([string](Get-Item $RegPath).getvaluekind($Property)).toUpper()
+        if ($valueType -notin $types.Values) {
+            throw "Uncknown value type `"$valueType`"."
+        }
+        return $valueType
+    }
+
+    # return property value
+    $value = Get-ItemProperty $RegPath | Select-Object -ExpandProperty $Property
+    return $value
 }
 
 #--------------------------------------------------
-function Get-RegistryValueDataType ([string]$key, [string]$item) {
-    $ErrorActionPreference = 'Stop'
+function Set-RegKeyPropertyValue {
+    param (
+        [parameter(Position = 0)]
+        [string]$RegPath = $(throw "Required argument not provided: -RegPath."),
 
-    $itemType = ([string](gi $key -ErrorAction Stop).getvaluekind($item)).toUpper()
-    if ($itemType -notin 'STRING', 'EXPANDSTRING', 'BINARY', 'DWORD', 'MULTISTRING', 'QWORD') {
-        return $null
+        [parameter(Position = 1)]
+        [string]$Property = $(throw "Required argument not provided: -Property."),
+
+        [parameter(Position = 2)]
+        [string]$Value = $null,
+
+        [parameter(Position = 3)]
+        [ValidateSet('STRING', 'EXPANDSTRING', 'MULTISTRING', 'DWORD', 'QWORD', 'BINARY',
+            'REG_SZ', 'REG_EXPAND_SZ', 'REG_MULTI_SZ', 'REG_DWORD', 'REG_QWORD', 'REG_BINARY',
+            $null)]
+        [string]$ValueType = $null,
+
+        [parameter(Position = 4)]
+        [switch]$Force
+    )
+
+    if (!$Force) { throw "Parameter -Force is required to confirm this operation." }
+
+    $RegPath = Convert-RegPath $RegPath
+
+    # if value type not explicitly specified, then check current type (if target property exists)
+    if (!$ValueType) {
+        try { $ValueType = Get-RegKeyPropertyValue $RegPath $Property -GetType }
+        catch {}
     }
-    return $itemType
+
+    # set default value type
+    if (!$ValueType) {
+        $ValueType = 'STRING'
+    }
+
+    # convert type name into PowerShell-accepted format
+    if ($ValueType.StartsWith('REG_')) {
+        $ValueType = $types.$ValueType
+    }
+
+    # create missing children directories in $RegPath
+    New-RegKey $RegPath -Force:$Force
+
+    # create key property with value
+    try {
+        New-ItemProperty $RegPath -Name $Property -PropertyType $ValueType -Value $Value -Force | Out-Null
+    }
+    catch {
+        if ($_.Exception -like "*Cannot convert value * to type*") {
+            $currentType = Get-RegKeyPropertyValue $RegPath -Property $Property -GetType
+            throw "Value `"$Value`" cannot be converted into target property's current type `"$currentType`" (use -ValueType parameter to force change type)."
+        }
+
+        if ($_.Exception -like "*Requested registry access is not allowed*") {
+            throw "Access denied. Are you running as administrator?"
+        }
+
+        throw $_
+    }
 }
 
 #--------------------------------------------------
-function Set-RegistryValueData {
-    [CmdletBinding()]
-    param (
-        [parameter()]
-        [string]$key = $(throw "Mandatory argument not provided: <key>."),
+function Remove-RegKey {
+    param(
+        [Parameter(Position = 0)]
+        [string]$RegPath = $(throw "Required argument not provided: <RegPath>."),
 
-        [parameter()]
-        [string]$item = $(throw "Mandatory argument not provided: <item>."),
-
-        [parameter()]
-        [ValidateSet('STRING', 'EXPANDSTRING', 'BINARY', 'DWORD', 'MULTISTRING', 'QWORD', $null)]
-        [string]$itemType = $null,
-
-        [parameter()]
-        $value = $null
+        [Parameter(Position = 1)]
+        [switch]$Force
     )
 
-    $ErrorActionPreference = 'Stop'
+    if (!$Force) { throw "Parameter -Force is required to confirm this operation." }
 
-    if ($key.StartsWith('Computer\')) {
-        $key = $key.Substring(9)
+    $RegPath = Convert-RegPath $RegPath
+
+    try {
+        Remove-Item $RegPath -Force:$Force -Recurse
     }
+    catch {
+        if ($_.Exception -like "*Requested registry access is not allowed*") {
+            throw "Access denied. Are you running as administrator?"
+        }
 
-    if ($key.StartsWith('HKEY_CURRENT_USER\')) {
-        $key = "HKCU:" + $key.Substring(17)
+        throw $_
     }
-
-    if ($key.StartsWith('HKEY_LOCAL_MACHINE\')) {
-        $key = "HKLM:" + $key.Substring(18)
-    }
-
-    if (!$itemType) {
-        $itemType = Get-RegistryValueDataType $key -item $item
-    }
-
-    if (!$itemType) {
-        $itemType = 'STRING'
-    }
-
-    #- create missing directories in $key
-    $path = $key
-    $paths = @()
-    while (!(Test-Path $path)) {
-        $paths += $path
-        $path = $path | Split-Path
-    }
-    $paths[($paths.Length - 1)..0] | % { New-Item $_ | Out-Null }
-
-    #- create registry value with data
-    New-ItemProperty $key -Name $item -PropertyType $itemType -Value $value -Force | Out-Null
 }
 
-Export-ModuleMember -Function *
+#--------------------------------------------------
+function Remove-RegKeyProperty {
+    param(
+        [Parameter(Position = 0)]
+        [string]$RegPath = $(throw "Required argument not provided: <RegPath>."),
+
+        [parameter(Position = 1)]
+        [string]$Property = $(throw "Required argument not provided: -Property."),
+
+        [Parameter(Position = 2)]
+        [switch]$Force
+    )
+
+    if (!$Force) { throw "Parameter -Force is required to confirm this operation." }
+
+    $RegPath = Convert-RegPath $RegPath
+
+    try {
+        Remove-ItemProperty $RegPath -Name $Property -Force:$Force
+    }
+    catch {
+        if ($_.Exception -like "*Requested registry access is not allowed*") {
+            throw "Access denied. Are you running as administrator?"
+        }
+
+        throw $_
+    }
+}
 
 
-
-# TODO WinRegistry
-
-# public:
-# Get-RegKey : list subkeys and values
-# Get-RegKeyValues : filtered list of the key values
-# Get-RegValueData : return value of specific key attribute
-# Get-RegValueDataType : return type of specific key attribute value
-# Set-RegValueData : set value of specific key attribute
-
-# private:
-# convert registry path to PS format: HKLM:\
-# convert registry path to REGEDIT format: HKEY_LOCAL_MACHINE
+Export-ModuleMember -Function New-RegKey,
+                              Show-RegKey,
+                              Get-RegKeyProperties,
+                              Get-RegKeyPropertyValue,
+                              Set-RegKeyPropertyValue,
+                              Remove-RegKey,
+                              Remove-RegKeyProperty
