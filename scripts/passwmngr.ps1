@@ -110,7 +110,7 @@ function decrypt-vault {
                 exit 1
             }
 
-            warning $_.ToString() -no_prefix
+            warning $_.ToString() -noprefix
             $failed_entries = $true
         }
     }
@@ -262,7 +262,7 @@ function add-secret {
         $col_name = $vault.config.columns[$i]
 
         $line = " $col_name".PadRight($padding) + ": "
-        info $line -no_newline
+        info $line -nonewline
         $col_value = $null
         $col_value = Read-Host
 
@@ -304,9 +304,9 @@ function delete-secret {
     )
 
     newline
-    warning "DELETE SECRET: Type full secret name (must match exactly)" -no_prefix
+    warning "DELETE SECRET: Type full secret name (must match exactly)" -noprefix
     newline
-    info "  > " -no_newline
+    info "  > " -nonewline
     $userin = Read-Host
     newline
 
@@ -336,7 +336,7 @@ function show-secrets {
     newline
     info "SHOW SECRET: Type secret name (wildcard '*' supported)"
     newline
-    info "  > " -no_newline
+    info "  > " -nonewline
     $userin = Read-Host
     newline
 
@@ -346,13 +346,13 @@ function show-secrets {
         Write-Host (separator $border_width -bold -no_borders)
 
         foreach ($secret_name in $filtered_secret_names) {
-            info ($vault.config.columns[0].PadRight($padding) + ": ") -no_newline
+            info ($vault.config.columns[0].PadRight($padding) + ": ") -nonewline
             info $secret_name
 
             for ($i = 1; $i -lt $vault.config.columns.Count; $i++) {
                 $row_title = $vault.config.columns[$i]
                 $row_value = $vault.secrets.$secret_name[$row_title.ToLower()]
-                info ($row_title.PadRight($padding) + ": ") -no_newline
+                info ($row_title.PadRight($padding) + ": ") -nonewline
                 info $row_value
                 if ($row_title -eq 'SECRET') { $secret = $row_value }
             }
@@ -380,7 +380,7 @@ function show-secrets {
         }
     }
     else {
-        warning "Nothing found matching filter `"$userin`"" -no_prefix
+        warning "Nothing found matching filter `"$userin`"" -noprefix
         newline
         info "press any key to return to main menu"
         wait-any-key
@@ -398,7 +398,7 @@ function purge-vault {
     warning "PURGE VAULT"; newline
     info "To confirm purging of current vault, type `"DELETE`" (upper case) and hit Enter"
     info "Any other input will cancel this operation"; newline
-    info "  > " -no_newline
+    info "  > " -nonewline
     $userin = Read-Host
     newline
 
@@ -432,30 +432,30 @@ function create-master-password {
     param($title)
 
     while (!$passIsGood) {
-        
+
         $passIsGood = $true
         cls; newline
         info $title -success; newline
-        info ("Enter new master password".PadRight(32) + ": ") -no_newline
+        info ("Enter new master password".PadRight(32) + ": ") -nonewline
         $master_password = Read-Host -AsSecureString | ss-to-plain
 
         if ($master_password.Length -lt 8) {
             $passIsGood = $false
             newline
-            warning "Master password must be at least 8 characters long" -no_prefix
-            warning "It's complexity is on you" -no_prefix
+            warning "Master password must be at least 8 characters long" -noprefix
+            warning "It's complexity is on you" -noprefix
             if (!(try-again)) { return $null }
             cls
             continue
         }
 
-        info "Enter password again to confirm : " -no_newline
+        info "Enter password again to confirm : " -nonewline
         $verification_password = Read-Host -AsSecureString | ss-to-plain
 
         if ($verification_password -ne $master_password) {
             $passIsGood = $false
             newline
-            warning "Passwords do not match" -no_prefix
+            warning "Passwords do not match" -noprefix
             if (!(try-again)) { return $null }
             cls
             continue
@@ -487,7 +487,7 @@ function change-master-password {
         info "press any key to return to main menu"
         wait-any-key
     }
-    
+
     return $master_password
 }
 
@@ -545,7 +545,7 @@ $newsize = $pswindow.windowsize
 $newsize.height = 50
 $newsize.width = $vault_display_width
 $pswindow.windowsize = $newsize
-$pswindow.WindowTitle = " PASSWORD MANAGER    v1.0.0    https://github.com/PavelStsefanovich/lib_powershell" 
+$pswindow.WindowTitle = " PASSWORD MANAGER    v1.0.0    https://github.com/PavelStsefanovich/lib_powershell"
 
 
 #--------------------------------------------------
@@ -555,7 +555,7 @@ if ((gi $VAULT_FILE_PATH -ErrorAction SilentlyContinue).Length -gt 0) { $vault_e
 
 while ($vault_exists -and !$auth_successful) {
     cls; newline
-    info "Enter master password to enter vault: " -no_newline
+    info "Enter master password to enter vault: " -nonewline
     $MASTER_PASSWORD = Read-Host  -AsSecureString | ss-to-plain
     $encrypted_vault = cat $VAULT_FILE_PATH
     if ($encrypted_vault -is [string]) { $encrypted_vault = ,@($encrypted_vault) }
