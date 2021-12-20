@@ -17,7 +17,7 @@ $types = @{
     'REG_BINARY'    = 'BINARY'
 }
 
-$registryDrives = (Get-PSDrive | ? { $_.Provider.name -eq 'Registry' }).Name
+$registryDrives = (Get-PSDrive | Where-Object { $_.Provider.name -eq 'Registry' }).Name
 
 foreach ($hive in $hives.Keys) {
     if ($hive -notin $registryDrives) {
@@ -46,7 +46,8 @@ function Convert-RegPath {
         if ($RegPath.StartsWith('HKEY_')) {
             if ($RegPath -match '(^HKEY_[a-zA-Z_]+)\\') {
                 $hiveLongName = $Matches[1]
-                $hive = ($hives.GetEnumerator() | ? { $_.value -eq $hiveLongName }).name
+                $hive = ($hives.GetEnumerator() | `
+                    Where-Object { $_.value -eq $hiveLongName }).name
                 $RegPath = $RegPath.Replace($hiveLongName, $hive)
             }
         }
@@ -71,13 +72,25 @@ function Convert-RegPath {
         # send result to pipeline
         $RegPath
     }
+
+    <#
+    .Description
+    Converts Registry path into format supported by PowerShell provider.
+    This is internal function and is not exported on module import.
+    .PARAMETER RegPath
+    Specifies full path to the target Registry key.
+    Example: -RegPath Computer\HKEY_LOCAL_MACHINE\SOFTWARE\<some_key>
+    Example: -RegPath HKLM/SOFTWARE/<some_key>
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/WinRegistry
+    #>
 }
 
 #--------------------------------------------------
 function New-RegKey {
     param (
-        [Parameter(Position = 0)]
-        [string]$RegPath = $(throw "Required argument not provided: <RegPath>."),
+        [Parameter(Position = 0, Mandatory = $true)]
+        [string]$RegPath,
 
         [Parameter(Position = 1)]
         [switch]$Force
@@ -93,7 +106,8 @@ function New-RegKey {
         $RegPath = $RegPath | Split-Path
     }
     try {
-        $paths[($paths.Length - 1)..0] | % { New-Item $_ | Out-Null }
+        $paths[($paths.Length - 1)..0] | `
+            ForEach-Object { New-Item $_ | Out-Null }
     }
     catch {
         if ($_.Exception -like "*Requested registry access is not allowed*") {
@@ -102,13 +116,28 @@ function New-RegKey {
 
         throw $_
     }
+
+    <#
+    .Description
+    Creates new Registry key, if it does not exist already.
+    Automatically creates missing subkeys in the path.
+    .PARAMETER RegPath
+    Specifies full path to the target Registry key.
+    Example: -RegPath Computer\HKEY_LOCAL_MACHINE\SOFTWARE\<some_key>
+    Example: -RegPath HKLM/SOFTWARE/<some_key>
+    .PARAMETER Force
+    Required parameter. Use to confirm your intent to proceed.
+    Example: -Force
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/WinRegistry
+    #>
 }
 
 #--------------------------------------------------
 function Show-RegKey {
     param (
-        [Parameter(Position = 0)]
-        [string]$RegPath = $(throw "Required argument not provided: <RegPath>."),
+        [Parameter(Position = 0, Mandatory = $true)]
+        [string]$RegPath,
 
         [Parameter(Position = 1)]
         [switch]$SubKeys
@@ -117,22 +146,38 @@ function Show-RegKey {
     $RegPath = Convert-RegPath $RegPath
 
     if ($SubKeys) {
-        $keys = (Get-ChildItem $RegPath).name | sort | Split-Path -Leaf
+        $keys = (Get-ChildItem $RegPath).name | `
+            Sort-Object | Split-Path -Leaf
         $keys
     }
     else {
-        $keys = (Get-ChildItem $RegPath).name | sort
-        $properties = (Get-Item $RegPath).property | sort
+        $keys = (Get-ChildItem $RegPath).name | Sort-Object
+        $properties = (Get-Item $RegPath).property | Sort-Object
         $keys
         $properties
     }
+
+    <#
+    .Description
+    Lists subkeys (with full paths) and properties of the target Registry key.
+    Optionally only lists subkeys names.
+    .PARAMETER RegPath
+    Specifies full path to the target Registry Key.
+    Example: -RegPath Computer\HKEY_LOCAL_MACHINE\SOFTWARE\<some_key>
+    Example: -RegPath HKLM/SOFTWARE/<some_key>
+    .PARAMETER SubKeys
+    Only lists subkeys names of the target Registry key.
+    Example: -SubKeys
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/WinRegistry
+    #>
 }
 
 #--------------------------------------------------
 function Get-RegKeyProperties {
     param (
-        [Parameter(Position = 0)]
-        [string]$RegPath = $(throw "Required argument not provided: -RegPath."),
+        [Parameter(Position = 0, Mandatory = $true)]
+        [string]$RegPath,
 
         [Parameter(Position = 1)]
         [string]$Filter = '*',
@@ -149,8 +194,10 @@ function Get-RegKeyProperties {
     )
 
     $RegPath = Convert-RegPath $RegPath
-    $propNames = (Get-Item $RegPath).property | ? { $_ -like $Filter } | sort
-    $propNameMaxLength = ($propNames | % { $_.length } | Measure-Object -Maximum).Maximum
+    $propNames = (Get-Item $RegPath).property | `
+        Where-Object { $_ -like $Filter } | Sort-Object
+    $propNameMaxLength = ($propNames | `
+        ForEach-Object { $_.length } | Measure-Object -Maximum).Maximum
 
     # return only properties names
     if (!$Detailed) { return $propNames }
@@ -159,7 +206,7 @@ function Get-RegKeyProperties {
 
     foreach ($prop in $propNames) {
         $propValue = Get-ItemProperty $RegPath | Select-Object -ExpandProperty $prop
-        $propType = ([string](gi $RegPath).getvaluekind($prop)).toUpper()
+        $propType = ([string](Get-Item $RegPath).getvaluekind($prop)).toUpper()
         $properties.Add($prop, @{ 'value' = $propValue; 'type' = $propType })
     }
 
@@ -185,16 +232,39 @@ function Get-RegKeyProperties {
     }
 
     return $output
+
+    <#
+    .Description
+    Lists properties of the target Registry key. Accepts filters.
+    Optionally shows properties' values and types.
+    Optionally returns result set as hashtable.
+    .PARAMETER RegPath
+    Specifies full path to the target Registry Key.
+    Example: -RegPath Computer\HKEY_LOCAL_MACHINE\SOFTWARE\<some_key>
+    Example: -RegPath HKLM/SOFTWARE/<some_key>
+    .PARAMETER Filter
+    Specifies filter for properties names to be included into result set.
+    Example: -Filter propname*
+    .PARAMETER Detailed
+    Includes properties' values and types.
+    Example: -Detailed
+    .PARAMETER AsHashtable
+    Returns result set as hashtable.
+    Requires parameter -Detailed to be specified first (must appear before -AsHashtable).
+    Example: -AsHashtable
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/WinRegistry
+    #>
 }
 
 #--------------------------------------------------
 function Get-RegKeyPropertyValue {
     param (
-        [Parameter(Position = 0)]
-        [string]$RegPath = $(throw "Required argument not provided: -RegPath."),
+        [Parameter(Position = 0, Mandatory = $true)]
+        [string]$RegPath,
 
-        [parameter(Position = 1)]
-        [string]$Property = $(throw "Required argument not provided: -Property."),
+        [parameter(Position = 1, Mandatory = $true)]
+        [string]$Property,
 
         [parameter(Position = 2)]
         [switch]$GetType
@@ -214,16 +284,34 @@ function Get-RegKeyPropertyValue {
     # return property value
     $value = Get-ItemProperty $RegPath | Select-Object -ExpandProperty $Property
     return $value
+
+    <#
+    .Description
+    Returns value of specific Registry key property.
+    Optionally returns property type instead of value.
+    .PARAMETER RegPath
+    Specifies full path to the target Registry Key.
+    Example: -RegPath Computer\HKEY_LOCAL_MACHINE\SOFTWARE\<some_key>
+    Example: -RegPath HKLM/SOFTWARE/<some_key>
+    .PARAMETER Property
+    Specifies target Registry key property.
+    Example: -Property <property_name>
+    .PARAMETER GetType
+    Returns property type instead of value.
+    Example: -GetType
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/WinRegistry
+    #>
 }
 
 #--------------------------------------------------
 function Set-RegKeyPropertyValue {
     param (
-        [parameter(Position = 0)]
-        [string]$RegPath = $(throw "Required argument not provided: -RegPath."),
+        [parameter(Position = 0, Mandatory = $true)]
+        [string]$RegPath,
 
-        [parameter(Position = 1)]
-        [string]$Property = $(throw "Required argument not provided: -Property."),
+        [parameter(Position = 1, Mandatory = $true)]
+        [string]$Property,
 
         [parameter(Position = 2)]
         [string]$Value = $null,
@@ -234,13 +322,14 @@ function Set-RegKeyPropertyValue {
             $null)]
         [string]$ValueType = $null,
 
-        [parameter(Position = 4)]
+        [parameter()]
         [switch]$Force
     )
 
     if (!$Force) { throw "Parameter -Force is required to confirm this operation." }
 
     $RegPath = Convert-RegPath $RegPath
+    $UserInputValueType = $ValueType
 
     # if value type not explicitly specified, then check current type (if target property exists)
     if (!$ValueType) {
@@ -267,8 +356,13 @@ function Set-RegKeyPropertyValue {
     }
     catch {
         if ($_.Exception -like "*Cannot convert value * to type*") {
-            $currentType = Get-RegKeyPropertyValue $RegPath -Property $Property -GetType
-            throw "Value `"$Value`" cannot be converted into target property's current type `"$currentType`" (use -ValueType parameter to force change type)."
+            if ($UserInputValueType) {
+                throw "Value `"$Value`" cannot be converted into type `"$ValueType`"."
+            }
+            else {
+                $currentType = Get-RegKeyPropertyValue $RegPath -Property $Property -GetType
+                throw "Value `"$Value`" cannot be converted into target property's current type `"$currentType`" (use -ValueType parameter to force change type)."
+            }
         }
 
         if ($_.Exception -like "*Requested registry access is not allowed*") {
@@ -277,13 +371,40 @@ function Set-RegKeyPropertyValue {
 
         throw $_
     }
+
+    <#
+    .Description
+    Sets value and type of specific Registry key property. Creates new property, if does not exist already.
+    If type is not specified, uses current type of the target property (value must be of the same type).
+    If type is not specified and property does not not exist, defaults to 'REG_SZ'.
+    .PARAMETER RegPath
+    Specifies full path to the target Registry Key.
+    Example: -RegPath Computer\HKEY_LOCAL_MACHINE\SOFTWARE\<some_key>
+    Example: -RegPath HKLM/SOFTWARE/<some_key>
+    .PARAMETER Property
+    Specifies target Registry key property.
+    Example: -Property <property_name>
+    .PARAMETER Value
+    Specifies new value.
+    Example: -Value <value>
+    .PARAMETER ValueType
+    Specifies new value type.
+    CAUTION: if specified while target property exists, will force-udate of property type.
+    If not specified while target property exists, will use current property type.
+    Example: -ValueType DWORD
+    .PARAMETER Force
+    Required parameter. Use to confirm your intent to proceed.
+    Example: -Force
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/WinRegistry
+    #>
 }
 
 #--------------------------------------------------
 function Remove-RegKey {
     param(
-        [Parameter(Position = 0)]
-        [string]$RegPath = $(throw "Required argument not provided: <RegPath>."),
+        [Parameter(Position = 0, Mandatory = $true)]
+        [string]$RegPath,
 
         [Parameter(Position = 1)]
         [switch]$Force
@@ -303,16 +424,30 @@ function Remove-RegKey {
 
         throw $_
     }
+
+    <#
+    .Description
+    Deletes target Registry key and all its children (subkeys and properties).
+    .PARAMETER RegPath
+    Specifies full path to the target Registry Key.
+    Example: -RegPath Computer\HKEY_LOCAL_MACHINE\SOFTWARE\<some_key>
+    Example: -RegPath HKLM/SOFTWARE/<some_key>
+    .PARAMETER Force
+    Required parameter. Use to confirm your intent to proceed.
+    Example: -Force
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/WinRegistry
+    #>
 }
 
 #--------------------------------------------------
 function Remove-RegKeyProperty {
     param(
-        [Parameter(Position = 0)]
-        [string]$RegPath = $(throw "Required argument not provided: <RegPath>."),
+        [Parameter(Position = 0, Mandatory = $true)]
+        [string]$RegPath,
 
-        [parameter(Position = 1)]
-        [string]$Property = $(throw "Required argument not provided: -Property."),
+        [parameter(Position = 1, Mandatory = $true)]
+        [string]$Property,
 
         [Parameter(Position = 2)]
         [switch]$Force
@@ -332,6 +467,23 @@ function Remove-RegKeyProperty {
 
         throw $_
     }
+
+    <#
+    .Description
+    Deletes specific Registry key property.
+    .PARAMETER RegPath
+    Specifies full path to the target Registry Key.
+    Example: -RegPath Computer\HKEY_LOCAL_MACHINE\SOFTWARE\<some_key>
+    Example: -RegPath HKLM/SOFTWARE/<some_key>
+    .PARAMETER Property
+    Specifies target Registry key property.
+    Example: -Property <property_name>
+    .PARAMETER Force
+    Required parameter. Use to confirm your intent to proceed.
+    Example: -Force
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/WinRegistry
+    #>
 }
 
 
