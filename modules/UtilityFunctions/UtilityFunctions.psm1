@@ -372,11 +372,18 @@ function which {
 #--------------------------------------------------
 function list-module-commands {
     param(
-        [Parameter(Position = 0)][ValidateNotNullOrEmpty()][string]$module_name = $(throw "Mandatory parameter not provided: <module_name>."),
-        [Parameter()][switch]$as_hashtable
+        [Parameter(Position = 0)]
+        [ValidateNotNullOrEmpty()]
+        [Alias("name")]
+        [string]$module_name = $(throw "Mandatory parameter not provided: <module_name>."),
+        
+        [Parameter(Position = 1)]
+        [switch]$as_hashtable
     )
 
-    $module_name = (Get-Module utilityfunctions).Name
+    try { $module_name = (Get-Module $module_name).Name }
+    catch { throw "Cannot find module `"$module_name`"" }
+    
     if (!$module_name) { throw "Module not found: `"$module_name`""}
     $module_version = (Get-Module $module_name).Version.ToString()
     $commands_map = @{}
@@ -389,11 +396,11 @@ function list-module-commands {
         }
 
     if ($as_hashtable) { return $commands_map }
-    write "$module_name v$module_version`:"
+    info "$module_name v$module_version`:"
     $commands_map.keys | sort | %{
-        $line = " $_"
-        if ($commands_map.$_) { $line += " "*(($max_length + 5) - $_.length) + "--> $($commands_map.$_)" }
-        write $line
+        $line = " $_".PadRight($max_length + 5)
+        if ($commands_map.$_) { $line += "-->  $($commands_map.$_)" }
+        info $line -sub
     }
 
     <#
