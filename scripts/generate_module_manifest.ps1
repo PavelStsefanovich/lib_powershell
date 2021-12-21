@@ -114,14 +114,14 @@ if (! $skip_manifest_update) {
         foreach ($item in $user_input_strings) {
             $value = $null
             info "  ? $item`: " -no_newline
-            $value = Read-Host
+            $value = (Read-Host).Replace("'", '"')
             if ($value.Trim().Length -gt 0) { $manifest.$item = $value }
         }
 
         foreach ($item in $user_input_lists) {
             $value = $null
             info "  ? $item` (comma-separated): " -no_newline
-            $value = Read-Host
+            $value = (Read-Host).Replace("'", '"')
             if ($value.Trim().Length -gt 0) { $manifest.$item = @($value.Split(',') | % {$_.Trim()}) }
         }
 
@@ -189,7 +189,7 @@ if (! $skip_manifest_update) {
         foreach ($item in $user_update_strings) {
             $value = $null
             info "  ? $item`: " -no_newline
-            $value = Read-Host
+            $value = (Read-Host).Replace("'", '"')
             if ($value.Trim().Length -gt 0) { $manifest.$item = $value }
         }
 
@@ -203,6 +203,7 @@ if (! $skip_manifest_update) {
             }
             $command += " -$key '$($manifest.$key)'"
         }
+        write-host $command -ForegroundColor Magenta
         iex $command
         info "done" -success
     }
