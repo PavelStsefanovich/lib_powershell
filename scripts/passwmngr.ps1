@@ -508,12 +508,12 @@ $SCRIPT_FULLPATH = $PSCommandPath
 #--------------------------------------------------
 # DEPENDENCIES
 if (!$child_window) {
-    try { Import-Module UtilityFunctions -RequiredVersion '0.4.0' -DisableNameChecking -Force -ErrorAction Stop }
+    try { Import-Module UtilityFunctions -MinimumVersion '0.4.0' -DisableNameChecking -Force -ErrorAction Stop }
     catch {
         write-host " "
         $warning  = "Dependency module not found: UtilityFunctions v.0.4.0`n"
         $warning += "You can install it with the following command (must run as admin):`n"
-        $warning += " > Install-Module UtilityFunctions -RequiredVersion 0.4.0 -SkipPublisherCheck -Force"
+        $warning += " > Install-Module UtilityFunctions -MinimumVersion 0.4.0 -SkipPublisherCheck -Force"
         write-warning $warning
         Write-Host  "More info about the module can be found here:"
         Write-Host  " https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions`n"
