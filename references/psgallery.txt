@@ -1,0 +1,17 @@
+
+
+##########  Get favicon permalink from GitHub
+
+1. Select file in GitHub UI:
+ https://github.com/PavelStsefanovich/lib_powershell/blob/main/modules/WinRegistry/favicon.ico
+
+2. Click three dots "..." -> Copy permalink -> paste into notepad:
+ https://github.com/PavelStsefanovich/lib_powershell/blob/106d83e3abc7d9df7add61e548140ae78b995f9b/modules/WinRegistry/favicon.ico
+
+3. Click "View raw" -> copy URL from the adress bar -> paste into notepad:
+ https://raw.githubusercontent.com/PavelStsefanovich/lib_powershell/main/modules/WinRegistry/favicon.ico
+
+4. Combine the two URL to construct URL in the form:
+ https://raw.githubusercontent.com/PavelStsefanovich/lib_powershell/106d83e3abc7d9df7add61e548140ae78b995f9b/modules/WinRegistry/favicon.ico
+
+5. Use this link as "IconUri" in a module manifest (.psd1).
