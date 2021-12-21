@@ -21,7 +21,7 @@ function prompt {
 
 
 # MODULES
-$modules_to_install = @('UtilityFunctions')
+$modules_to_install = @('UtilityFunctions', 'WinRegistry')
 $modules_to_install | % { Import-Module $_ -Force -DisableNameChecking }
 
 
