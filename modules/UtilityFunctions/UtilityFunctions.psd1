@@ -12,7 +12,7 @@
 RootModule = './UtilityFunctions.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.1'
+ModuleVersion = '0.4.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -30,7 +30,7 @@ CompanyName = 'Pavel Stsefanovich'
 Copyright = '(c) 2021 Pavel Stsefanovich. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Common console operations and standartized console output messaging.'
+Description = 'Common utilities and standardized console output messages for PowerShell admins.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '5.1'
@@ -114,7 +114,7 @@ PrivateData = @{
         IconUri = 'https://raw.githubusercontent.com/PavelStsefanovich/lib_powershell/5ecc43ec43a7552e3e51de0f31fde834085f632e/modules/UtilityFunctions/favicon.ico'
 
         # ReleaseNotes of this module
-        ReleaseNotes = 'Fixed function list-module-commands(): removed hardcoded module name "utilityfunctions"'
+        ReleaseNotes = 'Updated description'
 
         # Prerelease string of this module
         # Prerelease = ''
