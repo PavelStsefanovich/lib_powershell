@@ -49,7 +49,7 @@ function info {
         [switch]$sub
     )
 
-    $color = 'Gray'
+    $color = 'White'
     if ($success) { $color = 'Green' }
     if ($sub) { $color = 'DarkGray' }
 
@@ -320,11 +320,16 @@ function abspath {
     )
 
     process {
-        $path = $path -replace '^~', "$HOME"
-        if ([System.IO.Path]::IsPathRooted($path)) { $abspath = $path}
-        else { $abspath = (Join-Path ($parent | abspath) $path) }
-        if ($verify) { $abspath = (Resolve-Path $abspath -ErrorAction Stop).Path }
-        $abspath
+        if ($path) {
+            if ($path -eq '.') { $path = '' }
+            $path = $path.replace('/','\')
+            $path = $path -replace '^~', "$HOME"
+            $path = $path -replace '^.\\', ''
+            if ([System.IO.Path]::IsPathRooted($path)) { $abspath = $path }
+            else { $abspath = (Join-Path ($parent | abspath) $path) }
+            if ($verify) { $abspath = (Resolve-Path $abspath -ErrorAction Stop).Path }
+            $abspath
+        }
     }
 
     <#
@@ -571,7 +576,7 @@ function get-files-with-text {
         sls -SimpleMatch:$($PSCmdlet.ParameterSetName -eq "plain") -Pattern $search_string -List).Path
 
     if ($open) {
-        $text_editor = which notepad++ -no_errormessage
+        $text_editor = which notepad++
         if (!$text_editor) { $text_editor = 'notepad.exe' }
         $file_list | % { & $text_editor $_ }
     }
@@ -865,7 +870,7 @@ function run-process {
     $ErrorActionPreference = 'Stop'
 
     # resolve executable path
-    $resolved_exe_path = which $executable -no_errormessage
+    $resolved_exe_path = which $executable
     if ($resolved_exe_path) { $executable = $resolved_exe_path }
     else {
         try { $executable = $executable | abspath -verify }
@@ -915,7 +920,7 @@ function run-process {
 
     # add standard error stream and exit code to the output
     $output.stderr = $Process.StandardError.ReadToEnd()
-    $output.errcode = $Process.ExitCode
+    $output.exitcode = $Process.ExitCode
     return $output
 
     <#
