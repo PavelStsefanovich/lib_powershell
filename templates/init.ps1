@@ -41,3 +41,8 @@ $IS_INTERACTIVE = (Get-CimInstance win32_process -Filter "ProcessID=$PID" | `
 
 #--------------------------------------------------
 # DO SOMETHING
+
+
+#--------------------------------------------------
+# ELAPSED TIME
+"SCRIPT FINISHED in $($STOPWATCH.Elapsed.Minutes) Minutes $($STOPWATCH.Elapsed.Seconds) Seconds."
