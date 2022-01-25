@@ -395,20 +395,12 @@ if ($call_api) {
     }
 
     # UPLOAD FILE
-    elseif ($content_type -eq 'application/text') {
-        irm -Uri $url_ -Headers $headers_ -Method $method_ -ContentType $type_ -Body $request_input_file
+    elseif ($request_data) {
+        irm -Uri $url_ -Headers $headers_ -Method $method_ -ContentType $type_ -Body $request_data
     }
 
     # UPLOAD DATA
     else {
-        if ($request_input_file) {
-            $request_data = cat $request_input_file -Raw
-        }
-
-        if ($request_data -and ($content_type -ne 'text/plain')) {
-            $request_data = $request_data | jason_to_hash
-        }
-
-        irm -Uri $url_ -Headers $headers_ -Method $method_ -ContentType $type_ -Body $request_data
+        irm -Uri $url_ -Headers $headers_ -Method $method_ -ContentType $type_ -InFile $request_input_file
     }
 }
