@@ -1242,7 +1242,7 @@ function ll {
         if ($sort_attr -eq 'Length') { $ls_output_files = ls $dirpath -Filter $filter -File | sort $sort_attr -Descending:$desc.IsPresent }
 
         # concatenate all with directories first
-        $ls_output = $ls_output_dirs + $ls_output_files
+        $ls_output = @($ls_output_dirs) + @($ls_output_files)
     }
 
     foreach ($item in $ls_output) {
