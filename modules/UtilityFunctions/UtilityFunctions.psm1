@@ -324,7 +324,7 @@ function abspath {
             if ($path -eq '.') { $path = '' }
             $path = $path.replace('/','\')
             $path = $path -replace '^~', "$HOME"
-            $path = $path -replace '^.\\', ''
+            $path = $path -replace '^\.\\', ''
             if ([System.IO.Path]::IsPathRooted($path)) { $abspath = $path }
             else { $abspath = (Join-Path ($parent | abspath) $path) }
             if ($verify) { $abspath = (Resolve-Path $abspath -ErrorAction Stop).Path }
@@ -381,14 +381,14 @@ function list-module-commands {
         [ValidateNotNullOrEmpty()]
         [Alias("name")]
         [string]$module_name = $(throw "Mandatory parameter not provided: <module_name>."),
-        
+
         [Parameter(Position = 1)]
         [switch]$as_hashtable
     )
 
     try { $module_name = (Get-Module $module_name).Name }
     catch { throw "Cannot find module `"$module_name`"" }
-    
+
     if (!$module_name) { throw "Module not found: `"$module_name`""}
     $module_version = (Get-Module $module_name).Version.ToString()
     $commands_map = @{}
@@ -441,7 +441,21 @@ function zip {
     $zippath = $zippath | abspath
     mkdir (Split-Path $zippath) -Force -ErrorAction stop | Out-Null
     Add-Type -AssemblyName "system.io.compression.filesystem"
-    [io.compression.zipfile]::CreateFromDirectory($fromdir, $zippath, $compression, $include_basedir.IsPresent)
+    try {
+        [io.compression.zipfile]::CreateFromDirectory($fromdir, $zippath, $compression, $include_basedir.IsPresent)
+    }
+    catch {
+        if ($_.FullyQualifiedErrorId -eq 'UnauthorizedAccessException') {
+            if (Test-Path $zippath) {
+                if ((gi $zippath).PSIsContainer) {
+                    error "Invalid value of parameter -zippath: `"$zippath`". This path resolves to existing directory, but must be a filepath."
+                }
+            }
+        }
+        else {
+            throw $_
+        }
+    }
 
     <#
     .Description
@@ -472,13 +486,13 @@ function zip {
 function unzip {
     param(
         [string]$zippath,
-        [string]$todir
+        [string]$todir = $PWD.path
     )
 
     try { $zippath = $zippath | abspath -verify }
     catch { throw "Failed to validate parameter <zippath>: $($_.ToString())" }
     $todir = $todir | abspath
-    mkdir (Split-Path $todir) -Force -ErrorAction stop | Out-Null
+    if (! (Test-Path $todir)) { mkdir $todir -Force -ErrorAction stop | Out-Null }
     Add-Type -AssemblyName "system.io.compression.filesystem"
     [io.compression.zipfile]::ExtractToDirectory($zippath, $todir)
 
