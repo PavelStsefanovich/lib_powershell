@@ -12,7 +12,7 @@
 RootModule = './UtilityFunctions.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.5'
+ModuleVersion = '0.4.8'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()

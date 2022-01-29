@@ -445,16 +445,12 @@ function zip {
         [io.compression.zipfile]::CreateFromDirectory($fromdir, $zippath, $compression, $include_basedir.IsPresent)
     }
     catch {
-        if ($_.FullyQualifiedErrorId -eq 'UnauthorizedAccessException') {
-            if (Test-Path $zippath) {
-                if ((gi $zippath).PSIsContainer) {
-                    error "Invalid value of parameter -zippath: `"$zippath`". This path resolves to existing directory, but must be a filepath."
-                }
+        if (Test-Path $zippath) {
+            if ((gi $zippath).PSIsContainer) {
+                error "Invalid value of parameter -zippath: `"$zippath`". This path resolves to existing directory, but must be a filepath."
             }
         }
-        else {
-            throw $_
-        }
+        throw $_
     }
 
     <#
