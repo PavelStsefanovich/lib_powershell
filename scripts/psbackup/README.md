@@ -21,3 +21,5 @@ To set up scheduled task to run backup periodically, run `psbackup.ps1` script w
 To delete scheduled task, run `psbackup.ps1` script with *-unset_scheduled_task* parameter:
 
     .\psbackup.ps1 -unset_scheduled_task
+
+> In all cases, the script must be run as administrator
