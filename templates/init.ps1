@@ -32,7 +32,7 @@ $PSDefaultParameterValues['*:Encoding'] = 'utf8'
 $SCRIPT_FULL_PATH = $PSCommandPath
 $SCRIPT_DIR = $PSScriptRoot
 $SCRIPT_NAME = $MyInvocation.MyCommand.Name
-SCRIPT_BASE_NAME = $(gi $PSCommandPath).BaseName
+$SCRIPT_BASE_NAME = $(gi $PSCommandPath).BaseName
 $WORKSPACE = $PWD.Path
 $IS_VERBOSE = [bool]($PSCmdlet.MyInvocation.BoundParameters.Verbose)
 $IS_INTERACTIVE = (Get-CimInstance win32_process -Filter "ProcessID=$PID" | `
