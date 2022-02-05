@@ -11,7 +11,7 @@ Run `passwmngr.ps1` script:
 
 If running for the first time, the script will prompt to create new master password.
 
-##### Vault file
+### Vault file
 
 On the first run the script creates `.psvlt` file in user home directory. To change default location, edit value of $VAULT_FILE_PATH variable in the `passwmngr.ps1` script:
 
@@ -20,5 +20,5 @@ On the first run the script creates `.psvlt` file in user home directory. To cha
 **Please note:** It makes sense to change the location of the vault to the directory that is being backed up regularly.
 **Please note:** Only one vault is being used at a time. If you change location in the script, but do not move your vault file, the new vault will be created next time you run the script.
 
-##### Script discovery
+### Script discovery
 To enable starting `passwmngr.ps1` script from anywhere, add the directory containing the scirpt to you PATH environment variable.
