@@ -508,7 +508,7 @@ $SCRIPT_FULLPATH = $PSCommandPath
 #--------------------------------------------------
 # DEPENDENCIES
 if (!$child_window) {
-    try { Import-Module UtilityFunctions -MinimumVersion '0.4.0' -DisableNameChecking -Force -ErrorAction Stop }
+    try { Import-Module UtilityFunctions -MinimumVersion '0.4.8' -DisableNameChecking -Force -ErrorAction Stop }
     catch {
         write-host " "
         $warning  = "Dependency module not found: UtilityFunctions v.0.4.8+`n"
@@ -545,7 +545,7 @@ $newsize = $pswindow.windowsize
 $newsize.height = 50
 $newsize.width = $vault_display_width
 $pswindow.windowsize = $newsize
-$pswindow.WindowTitle = " PASSWORD MANAGER    v1.0.0    https://github.com/PavelStsefanovich/lib_powershell"
+$pswindow.WindowTitle = " PASSWORD MANAGER    v0.1.0    https://github.com/PavelStsefanovich/lib_powershell"
 
 
 #--------------------------------------------------
