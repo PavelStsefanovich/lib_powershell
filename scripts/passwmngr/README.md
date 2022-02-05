@@ -18,6 +18,7 @@ On the first run the script creates `.psvlt` file in user home directory. To cha
 ![vault.default.location.png](vault.default.location.png)
 
 **Please note:** It makes sense to change the location of the vault to the directory that is being backed up regularly.
+
 **Please note:** Only one vault is being used at a time. If you change location in the script, but do not move your vault file, the new vault will be created next time you run the script.
 
 ### Script discovery
