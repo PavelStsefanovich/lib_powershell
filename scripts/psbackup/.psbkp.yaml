@@ -1,0 +1,62 @@
+bkp_root_dir: PS.Backup
+
+
+schedule:
+  # Required; Accepted values: daily, weekly
+  type: weekly
+
+  # Only required if type==weekly, otherwise ignored
+  # Accepted values: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
+  day_of_the_week: Tuesday
+
+  # Interval for daily or weekly schedule (1 == every single one, 2 == every other one, etc.)
+  interval: 1
+
+  # Required; Accepted format: 24-hour with leading zeros, separated by colon; e.g. 05:30, 11:06
+  time: "21:00"
+
+
+retention:
+  backups_to_keep: 3  # Defaults to 1; Deletes older backup dir only when new one has completed successfully
+  min_free_space: 110gb # Defaults to 1gb; Accepted format: Number followed by 'mb' or 'gb'; e.g. 2gb, 100mb
+
+
+bkp_items:
+#### Example: ####
+# - source: 'abs_path\' # (!) source dir must have trailing backslash
+#   destination: 'bkp_root_dir-relative_path'
+#   include:
+#   - dir1
+#   - dir22*
+#   exclude:
+#   - dir3
+#   - dir44*
+##################
+
+- source: 'C:\Users\Pavel\'
+  destination: 'C\Users\Pavel'
+  include:
+  - '.*'
+
+- source: 'D:\'
+  destination: 'D'
+  exclude:
+  - GoogleDrive
+  - Steam*
+  - Videos
+  - VirtualBox
+
+- source: 'D:\'
+  destination: 'D'
+  include:
+  - Videos
+
+- source: 'D:\'
+  destination: 'D'
+  include:
+  - VirtualBox
+
+- source: 'D:\'
+  destination: 'D'
+  include:
+  - Steam*
