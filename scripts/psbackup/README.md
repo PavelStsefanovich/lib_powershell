@@ -1,6 +1,6 @@
 # PSBackup
 *Simple backup utility script*
-#TODO Update readme
+
 ### Dependencies
 - UtilityFunctions (https://www.powershellgallery.com/packages/UtilityFunctions)
 - powershell-yaml	(https://www.powershellgallery.com/packages/powershell-yaml)
