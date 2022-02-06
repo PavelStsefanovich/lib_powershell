@@ -1,9 +1,9 @@
 # jfr
 *PowerShell wrapper for JFrog Artifactory API*
 
-### Usage
+## Usage
 
-##### Add Login
+#### Add Login
 If running for the first time, User must provide default Artifactory login info:
 
     .\jfr.ps1 -add_login <string> -artifactory_base_url <string>
@@ -18,12 +18,12 @@ Once login info is provided and API key is received, it will be used automatical
 
 Additional login configurations may be added, if more than one Artifactory instance is used, or if it is necessary to use separate credentials for different operations.
 
-##### List Logins
+#### List Logins
 To see all stored login configurations, run the following command:
 
     .\jfr.ps1 -list_logins
 
-##### Set Default Login
+#### Set Default Login
 If User does not explicitly specifies login configuration to be used with API call using ***-use_login*** parameter, then default login is used automatically. Default login config is the very first one added by User.
 
 To set another login configuration as default, run the following command:
@@ -32,7 +32,7 @@ To set another login configuration as default, run the following command:
 
 where value of ***-set_default_login*** parameter is a reference name of the target login configuration.
 
-##### Delete Login
+#### Delete Login
 To remove specific login from the logins cofingurations file, run the following command:
 
     .\jfr.ps1 -delete_login <string>
@@ -58,15 +58,15 @@ To run an API call against Artifactory, use the following command (all parameter
 | *use_login* | *login* | Mandatory value | Specifies login configuration to use instead of default login config. Value is target login reference name |
 
 ###### JFrog Documentation
-![JFrog Artifactory REST API](https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API)
+[JFrog Artifactory REST API](https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API)
 
 ###### Example of GET call:
 ![jfr.api.call.get.png](jfr.api.call.get.png)
 
-    .\jfr.ps1 /api/build/my_build_name/90
+    .\jfr.ps1 /api/build/my-build/51
 
 ###### Example of POST call:
 ![jfr.api.call.post.png](jfr.api.call.post.png)
 
-    .\jfr.ps1 /api/security/users/myuser -m POST -t application/json -in userdata.json
+    .\jfr.ps1 /api/security/users/davids -m POST -t application/json -in userdata.json
 
