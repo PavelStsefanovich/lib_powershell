@@ -2,6 +2,8 @@ function enlist ([switch]$r, [string]$a, [string]$d, [string]$s){
     $of = 'C:\some\path\file.txt'
     if ($r) {   # get random line
         $content = cat $of
+        $content -match '^.+$' | out-null
+        if ($Matches.length -eq 1) { $content = @($content) }
         $line = ""
         while ($line.Length -lt 1) {
             $ln_num = Get-Random $content.Length
