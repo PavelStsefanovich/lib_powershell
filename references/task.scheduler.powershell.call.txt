@@ -1,0 +1,1 @@
+-NoProfile -NoLogo -ExecutionPolicy Bypass -Command "& 'D:\UsefullScripts\psbackup.ps1'"
