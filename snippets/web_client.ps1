@@ -2,6 +2,7 @@ $token = $user + ":" + $apiToken
 $tokenBytes = [System.Text.Encoding]::UTF8.GetBytes($token)
 $base64 = [System.Convert]::ToBase64String($tokenBytes)
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+# [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
 
 # New Webclient
 $wc = New-Object System.Net.WebClient
