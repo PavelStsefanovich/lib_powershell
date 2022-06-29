@@ -96,7 +96,7 @@ function merr ($message, [switch]$newline) {
     write-host " (!) $message" -ForegroundColor Red
 }
 
-function jason_to_hash {
+function json_to_hash {
     param(
         [Parameter(Mandatory = $true,
             Position = 0,
@@ -148,7 +148,8 @@ if (!(Test-Path $config_file_path)) {
     $config_default | ConvertTo-Json | Set-Content $config_file_path -Force
 }
 
-$config = cat $config_file_path -Raw | jason_to_hash
+if ( $PSVersionTable.PSVersion.Major -gt 5 ) { $config = cat $config_file_path -Raw | ConvertFrom-Json -AsHashtable }
+else { $config = cat $config_file_path -Raw | json_to_hash }
 
 if (!$config) {
     $config = $config_default
