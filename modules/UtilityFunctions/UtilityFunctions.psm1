@@ -1210,6 +1210,7 @@ function ll {
         [Parameter()][switch]$desc,
         [Parameter()][switch]$file,
         [Parameter()][switch]$trim_name,
+        [Parameter()][switch]$force,
         [Parameter()][int]$spacer = 4
     )
 
@@ -1236,7 +1237,7 @@ function ll {
     $to_natural = { [regex]::Replace($_, '\d+', { $args[0].Value.PadLeft(20) }) }
 
     # sort by Date
-    if ($sort_attr -eq 'LastWriteTime') { $ls_output = ls $dirpath -Filter $filter -File:$file | sort $sort_attr -Descending:$(!$desc.IsPresent) }
+    if ($sort_attr -eq 'LastWriteTime') { $ls_output = ls $dirpath -Filter $filter -File:$file -Force:$force | sort $sort_attr -Descending:$(!$desc.IsPresent) }
     else {
         if (!$file) {
             # if $sort_by == 'Size', sort directories by name instead, because they all have Size == 0
@@ -1244,12 +1245,12 @@ function ll {
             if ($sort_attr_dir -eq 'Length') { $sort_attr_dir = 'Name' }
 
             # sort directories
-            if ($sort_attr_dir -eq 'Name') { $ls_output_dirs = ls $dirpath -Filter $filter -Directory | sort $to_natural -Descending:$desc.IsPresent }
+            if ($sort_attr_dir -eq 'Name') { $ls_output_dirs = ls $dirpath -Filter $filter -Directory -Force:$force | sort $to_natural -Descending:$desc.IsPresent }
         }
 
         # files
-        if ($sort_attr -eq 'Name') { $ls_output_files = ls $dirpath -Filter $filter -File | sort $to_natural -Descending:$desc.IsPresent }
-        if ($sort_attr -eq 'Length') { $ls_output_files = ls $dirpath -Filter $filter -File | sort $sort_attr -Descending:$desc.IsPresent }
+        if ($sort_attr -eq 'Name') { $ls_output_files = ls $dirpath -Filter $filter -File -Force:$force | sort $to_natural -Descending:$desc.IsPresent }
+        if ($sort_attr -eq 'Length') { $ls_output_files = ls $dirpath -Filter $filter -File -Force:$force | sort $sort_attr -Descending:$desc.IsPresent }
 
         # concatenate all with directories first
         $ls_output = @($ls_output_dirs) + @($ls_output_files)
@@ -1352,6 +1353,9 @@ function ll {
     .PARAMETER trim_name
     Trims long filenames to preset length (38 characters).
     Example: -trim_name
+    .PARAMETER force
+    Includes hidden files and directories.
+    Example: -force
     .PARAMETER spacer
     Specifies number of spaces between columns.
     Example: -spacer 5
