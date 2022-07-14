@@ -756,7 +756,7 @@ function run-sql() {
         [Parameter(ParameterSetName = "integrated")][switch]$winauth = $true,
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][Alias("q")][string]$query,
         [Parameter()][Alias("t")][int]$timeout = 0,
-        [Parameter(Mandatory = $true)][Alias("o")][string]$outfile,
+        [Parameter()][Alias("o")][string]$outfile,
         [Parameter()][Alias("n")][switch]$no_success_message
     )
 
@@ -1441,6 +1441,33 @@ function get-dotnet-fwk-version {
 }
 
 
+#--------------------------------------------------
+function get-fqdn {
+    param (
+        [Parameter()][switch] $old_notation
+    )    
+
+    if ( $old_notation ) {
+        return (Get-WmiObject -Namespace root\cimv2 -Class Win32_ComputerSystem | % { $_.domain, $_.name -join ('\') })
+    }
+
+    return (Get-WmiObject -Namespace root\cimv2 -Class Win32_ComputerSystem | % { $_.name, $_.domain -join ('.') })
+
+    <#
+    .SYNOPSIS
+    Alias: fqdn
+    .Description
+    Returns Fully Qualified Domain Name of the current host.
+    Optionally returns old notation in the format "DOMAIN\COMPUTERNAME".
+    .PARAMETER old_notation
+    If specified, returns old notation in the format "DOMAIN\COMPUTERNAME".
+    Example: -old_notation
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
+}
+
+
 
 #--------------------------------------------------
 Set-Alias -Name lf -Value newline -Force
@@ -1459,5 +1486,6 @@ Set-Alias -Name listis -Value list-installed-software -Force
 Set-Alias -Name dsort -Value dir-natural-sort -Force
 Set-Alias -Name unb -Value unblock-downloaded -Force
 Set-Alias -Name netfwk -Value get-dotnet-fwk-version -Force
+Set-Alias -Name fqdn -Value get-fqdn -Force
 
 Export-ModuleMember -Function * -Alias *

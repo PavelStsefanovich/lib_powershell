@@ -28,6 +28,7 @@ https://www.powershellgallery.com/packages/UtilityFunctions
 | file-tabs-to-spaces |  | Replace tabs with spaces in a file |
 | get-dotnet-fwk-version | netfwk | Print highest installed version of .NET framework |
 | get-files-with-text | fwt | Print (or open) texfiles that contain search string |
+| get-fqdn | fqdn | Print Fully Qualified Domain Name of the current host |
 | hibernate | hib | Put computer to sleep |
 | info |  | Print info message into console |
 | isadmin |  | Check if current console/script is running as admin |
