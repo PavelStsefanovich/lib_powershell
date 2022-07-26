@@ -1,0 +1,1 @@
+(Get-WmiObject win32_computersystem).Domain + "\" + (Get-WmiObject win32_computersystem).DNSHostName
