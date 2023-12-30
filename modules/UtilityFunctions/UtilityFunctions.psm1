@@ -1445,7 +1445,7 @@ function get-dotnet-fwk-version {
 function get-fqdn {
     param (
         [Parameter()][switch] $old_notation
-    )    
+    )
 
     if ( $old_notation ) {
         return (Get-WmiObject -Namespace root\cimv2 -Class Win32_ComputerSystem | % { $_.domain, $_.name -join ('\') })
@@ -1462,6 +1462,114 @@ function get-fqdn {
     .PARAMETER old_notation
     If specified, returns old notation in the format "DOMAIN\COMPUTERNAME".
     Example: -old_notation
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
+}
+
+
+#--------------------------------------------------
+function battery-report {
+    param(
+        [Parameter(Position = 0)][AllowEmptyString()][string]$outfile = "battery.report.full.html",
+        [Parameter()][switch]$full
+    )
+
+    if (! $outfile.EndsWith('.html')) { $outfile += '.html' }
+
+    if ($full) {
+        $outfile = $outfile | abspath
+        if ("$(Split-Path $outfile)" -ne "$($pwd.Path)") {
+            mkdir (Split-Path $outfile) -Force | Out-Null
+        }
+        & powercfg /batteryreport /output "$outfile"
+    }
+    else {
+        $outfile = Split-Path $outfile -Leaf
+        & powercfg /batteryreport /XML /output "$outfile" | Out-Null
+        [xml]$xml = cat $outfile -Raw
+        $health = [System.Math]::Round([int]$xml.BatteryReport.Batteries.Battery.FullChargeCapacity * 100 / [int]$xml.BatteryReport.Batteries.Battery.DesignCapacity)
+        info "Battery health: $health%"
+        rm $outfile -force
+    }
+
+    <#
+    .Description
+    Returns current battery health level in percents.
+    Optionally generates full battery report as .html file.
+    .PARAMETER outfile
+    Specifies absolute or relative path to the battery report output file (only when -full is specified).
+    Must have .html extension, otherwise it will be appended.
+    Missing subdirectories will be created.
+    Example: -outfile <path/to/file>
+    .PARAMETER full
+    If specified, the full battery report will be generated as .html file.
+    Example: -full
+    .LINK
+    https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
+    #>
+}
+
+
+#--------------------------------------------------
+function wifi-profiles {
+    param(
+        [Parameter(Position = 0)][AllowEmptyString()][string]$profile_name,
+        [Parameter()][switch]$all,
+        [Parameter()][switch]$force
+    )
+
+    $available_profiles = & netsh wlan show profile |
+    Select-String -Pattern '(?<=:\s).*' |
+    % { $_.Matches[0].Value }
+
+    if ($profile_name) {
+        if ($profile_name -notin $available_profiles) {
+            error "Unknown profile: `"$profile_name`"."
+            break
+        }
+        if (! $force) {
+            warning "Parameter -force must be specified to reveal passwords."
+            break
+        }
+        $password = netsh wlan show profile name="$profile_name" key=clear |
+        Select-String -Pattern '(\s+Key\sContent\s+):\s+(.*)' |
+        % { $_.Matches.Groups.Groups[2].Value }
+        info "Password: `"$password`""
+        break
+    }
+    elseif ($all) {
+        if (! $force) {
+            warning "Parameter -force must be specified to reveal passwords."
+            break
+        }
+        foreach ($profile_name in $available_profiles) {
+            $password = netsh wlan show profile name="$profile_name" key=clear |
+            Select-String -Pattern '(\s+Key\sContent\s+):\s+(.*)' |
+            % { $_.Matches.Groups.Groups[2].Value }
+            info "$($profile_name)`:`t`"$password`""
+        }
+        break
+    }
+
+    info "Available Wi-Fi profiles:"
+    $available_profiles | % { info $_ -sub }
+
+    <#
+    .Description
+    Returns list of all available Wi-Fi profiles.
+    Optionally returns password(s) for one or all profiles.
+    .PARAMETER profile_name
+    If specified, returns password for this profile.
+    Must be used along with -force parameter to confirm intent to reveal password.
+    Example: -profile_name WiFiNetworkName -force
+    .PARAMETER all
+    If specified, returns passwords for all available profiles.
+    Must be used along with -force parameter to confirm intent to reveal passwords.
+    Example: -all -force
+    .PARAMETER force
+    Used in conjunction with other parameters to confirm intent to reveal passwords.
+    Example: -force
     .LINK
     https://github.com/PavelStsefanovich/lib_powershell/tree/main/modules/UtilityFunctions
     #>
@@ -1487,5 +1595,7 @@ Set-Alias -Name dsort -Value dir-natural-sort -Force
 Set-Alias -Name unb -Value unblock-downloaded -Force
 Set-Alias -Name netfwk -Value get-dotnet-fwk-version -Force
 Set-Alias -Name fqdn -Value get-fqdn -Force
+Set-Alias -Name batt -Value battery-report -Force
+Set-Alias -Name wfp -Value wifi-profiles -Force
 
 Export-ModuleMember -Function * -Alias *

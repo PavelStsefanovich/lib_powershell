@@ -22,6 +22,7 @@ https://www.powershellgallery.com/packages/UtilityFunctions
 | ------------- | ------------- | ------------- |
 | abspath |  | Convert path to absolute path |
 | base64 |  | Encrypt/Decrypt text with base64 |
+| battery-report | batt | Print battery health level or generate full report |
 | error |  | Print error message into console |
 | extract-file | unzipf | Extract specific files from .zip archive |
 | file-hex-dump |  | Generate HEX table for a file |
@@ -49,6 +50,7 @@ https://www.powershellgallery.com/packages/UtilityFunctions
 | wait-any-key | wait | Wait for user to press any key |
 | warning |  | Print warning message into console |
 | which |  | Print command source path |
+| wifi-profiles | wfp | Print available Wi-Fi profiles, optionally reveal passwords |
 | zip |  | Compress directory into .zip archive |
 
 ### Module Commands Manuals
